@@ -145,45 +145,9 @@ gen-notes/
   comparisons/      — side-by-side comparisons
 ```
 
-## Domains (Topic Tags)
-
-Digests should include a `domain:` field in YAML frontmatter to enable filtered views without breaking the cross-linked knowledge graph. The five canonical domains are:
-
-| Domain | Scope |
-|--------|-------|
-| `ai` | AI, ML, deep learning, LLMs, agents, code generation, RLHF, scaling laws, dev-infra strategy |
-| `systems` | Computer architecture, GPU, CUDA, data center networking, RDMA, distributed systems, infrastructure |
-| `history` | Chinese history, world history, historiography methodology |
-| `science` | Physics, mathematics, complexity theory, information theory, philosophy of science, biology |
-| `wisdom` | Philosophy, leadership, classical thought (Chinese & Western), management, engineering culture, self-development |
-
-Cross-domain pages are expected and valuable — e.g. Kolmogorov complexity spans `ai` + `science`, Dijkstra spans `systems` + `wisdom`.
-
-Frontmatter example:
-```yaml
----
-domain: science
-concepts:
-  - Kolmogorov Complexity
-  - Algorithmic Randomness
-names:
-  - Andrei Kolmogorov
----
-```
-
-**Note:** Domain support in the ingest pipeline and index generation is planned but not yet implemented. For now, add `domain:` manually to new digests.
-
 ## Configuration
 
 See `references/config.json` for vault paths. All paths are relative to `vault_root`.
-
-## Pitfalls
-
-- **Frontmatter format:** Digest files MUST have YAML frontmatter with `---` delimiters at the TOP of the file. Obsidian inline properties at the bottom (`key:: value`) will NOT be parsed. The `concepts:` and `names:` fields must be YAML lists (`- item`), not `[[wikilink]]` format.
-- **Script path:** Run from `~/.hermes/skills/openclaw-imports/wiki-manager/` — `logging_utils.py` is bundled in `scripts/`. Falls back to `~/.openclaw` for `AGENT_DATA_DIR` if not set.
-- **`--extract-only` hangs:** If frontmatter concepts/names aren't found, the script falls back to LLM extraction (Gemini CLI) which can take 5-10 minutes and often times out. Fix the frontmatter first.
-- **Agent-primary workflow is more reliable than full ingest:** Use `--extract-only` to get metadata → check which pages exist → create/update pages via delegate_task or directly → run `index` to rebuild. This avoids the sequential Gemini CLI calls that cause SIGTERM/timeout issues.
-- **Timeout:** If using full ingest (not agent-primary), set `timeout=600+`. Multiple polls can interfere — use a single long wait.
 
 ## Dependencies
 
@@ -195,34 +159,17 @@ Gemini CLI is only needed for the ingest fallback pipeline (`ingest` without `--
 
 ## Pitfalls
 
-- **Script path:** Run from `~/.hermes/skills/openclaw-imports/wiki-manager/` — all dependencies are bundled.
-- **Frontmatter format is critical:** Concepts and names MUST be in YAML frontmatter at the **top** of the digest file with `---` delimiters. If missing, the script falls back to LLM extraction via Gemini CLI which takes 5-10 min and often times out. Always verify frontmatter before running ingest.
-- **Frontmatter values must be plain strings:** Use `- Multi-Agent Systems` not `- [[Multi-Agent Systems]]`. Wikilink syntax in YAML values breaks parsing.
-- **Agent-primary workflow is more reliable:** Instead of letting `ingest` run end-to-end (which makes sequential Gemini calls), prefer: (1) `ingest <path> --extract-only` to get metadata, (2) create/update concept and name pages yourself or via subagent delegation, (3) run `index` to rebuild. This avoids timeouts and gives you control over page quality.
-- **Timeout budget:** If using the full ingest pipeline, set `timeout=600+`. With 3 concepts + 5 names, expect 5-10 minutes of sequential Gemini CLI calls. Multiple polls can interfere — use a single long wait.
-
-## Pitfalls
-
 ### Script location
 Run wiki_manager.py from the hermes skills directory (logging_utils.py is bundled):
 ```bash
 cd ~/.hermes/skills/openclaw-imports/wiki-manager && python3 scripts/wiki_manager.py ...
 ```
 
-### `ingest --extract-only` hangs
-Even with correct frontmatter, the extract-only command may hang (likely during page existence checks or LLM fallback). If it times out after 30-60s:
-
-**Use the agent-primary workflow instead:**
-1. Verify frontmatter parses correctly (check that "Concepts from frontmatter" appears in output before timeout)
-2. Check which concept/name pages already exist by listing files in `gen-notes/concepts/` and `gen-notes/names/`
-3. Create new pages manually or via `delegate_task` subagent (use concept-page-prompt.md and name-page-prompt.md templates)
-4. Update existing pages to incorporate the new digest
-5. Run `python3 scripts/wiki_manager.py index` to rebuild the index (this always works quickly)
-
 ### Frontmatter format
-Digest notes MUST have YAML frontmatter at the TOP with `---` delimiters. Concepts and names must be YAML lists:
+Digest notes MUST have YAML frontmatter at the TOP with `---` delimiters. Concepts, names, and domain must be YAML values:
 ```yaml
 ---
+domain: ai
 concepts:
   - Multi-Agent Systems
   - Deep Research
@@ -231,4 +178,22 @@ names:
   - TextGrad
 ---
 ```
-NOT `concepts: [[Multi-Agent Systems]], [[Deep Research]]` — wikilink format is not parsed.
+- Use `- Multi-Agent Systems` not `- [[Multi-Agent Systems]]` — wikilink syntax in YAML breaks parsing.
+- Obsidian inline properties at the bottom (`key:: value`) will NOT be parsed.
+- If `domain:` is missing or invalid, defaults to `ai`.
+
+### `ingest --extract-only` hangs
+Even with correct frontmatter, the extract-only command may hang (likely during page existence checks or LLM fallback). If it times out after 30-60s:
+
+**Use the agent-primary workflow instead:**
+1. Verify frontmatter parses correctly (check that "Concepts from frontmatter" appears in output before timeout)
+2. Check which concept/name pages already exist by listing files in `gen-notes/concepts/` and `gen-notes/names/`
+3. Create new pages manually or via `delegate_task` subagent (use concept-page-prompt.md and name-page-prompt.md templates — pass `{domain}` placeholder)
+4. Update existing pages to incorporate the new digest
+5. Run `python3 scripts/wiki_manager.py index` to rebuild the index (this always works quickly)
+
+### Agent-primary workflow is more reliable
+Instead of letting `ingest` run end-to-end (which makes sequential Gemini calls), prefer: (1) `ingest <path> --extract-only` to get metadata, (2) create/update concept and name pages yourself or via subagent delegation, (3) run `index` to rebuild. This avoids timeouts and gives you control over page quality.
+
+### Timeout budget
+If using the full ingest pipeline, set `timeout=600+`. With 3 concepts + 5 names, expect 5-10 minutes of sequential Gemini CLI calls.
