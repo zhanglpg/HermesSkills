@@ -17,7 +17,6 @@ import json
 import logging
 import os
 import sys
-import pandas as pd
 from datetime import datetime
 from pathlib import Path
 
@@ -26,24 +25,25 @@ try:
 except ImportError:
     print("Installing yfinance...")
     import subprocess
+
     subprocess.check_call([sys.executable, "-m", "pip", "install", "yfinance", "-q"])
     import yfinance as yf
 
 
 def get_agent_data_dir() -> str:
     """Return the agent's data directory, defaulting to /tmp."""
-    val = os.environ.get('AGENT_DATA_DIR')
+    val = os.environ.get("AGENT_DATA_DIR")
     if val:
         return val
-    fallback = os.path.expanduser('~/.openclaw')
-    logging.warning('AGENT_DATA_DIR is not set — falling back to %s.', fallback)
-    os.environ['AGENT_DATA_DIR'] = fallback
+    fallback = os.path.expanduser("~/.openclaw")
+    logging.warning("AGENT_DATA_DIR is not set — falling back to %s.", fallback)
+    os.environ["AGENT_DATA_DIR"] = fallback
     return fallback
 
 
 # ── Configuration ─────────────────────────────────────────────────────────
 _SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_DEFAULT_CONFIG_PATH = os.path.join(_SKILL_DIR, 'references', 'config.json')
+_DEFAULT_CONFIG_PATH = os.path.join(_SKILL_DIR, "references", "config.json")
 
 PORTFOLIO = {
     "GOOG": {"name": "Alphabet", "sector": "Tech"},
@@ -74,16 +74,16 @@ def load_config(config_path=None):
     try:
         with open(path) as f:
             cfg = json.load(f)
-        if 'portfolio' in cfg:
-            PORTFOLIO = cfg['portfolio']
-        if 'thresholds' in cfg:
-            THRESHOLDS.update(cfg['thresholds'])
-        if 'output_dir' in cfg:
-            OUTPUT_DIR = Path(os.path.expanduser(os.path.expandvars(cfg['output_dir'])))
-        if 'state_file' in cfg:
-            STATE_FILE = Path(os.path.expanduser(os.path.expandvars(cfg['state_file'])))
-        if 'discord_channel' in cfg:
-            DISCORD_CHANNEL = cfg['discord_channel']
+        if "portfolio" in cfg:
+            PORTFOLIO = cfg["portfolio"]
+        if "thresholds" in cfg:
+            THRESHOLDS.update(cfg["thresholds"])
+        if "output_dir" in cfg:
+            OUTPUT_DIR = Path(os.path.expanduser(os.path.expandvars(cfg["output_dir"])))
+        if "state_file" in cfg:
+            STATE_FILE = Path(os.path.expanduser(os.path.expandvars(cfg["state_file"])))
+        if "discord_channel" in cfg:
+            DISCORD_CHANNEL = cfg["discord_channel"]
     except Exception as e:
         print(f"Warning: Failed to load config from {path}: {e}")
 
@@ -95,8 +95,8 @@ def get_market_data():
         data = yf.download(tickers, period="1d", progress=False)
         for ticker in tickers:
             try:
-                close = data[('Close', ticker)].iloc[-1] if len(data) > 0 else None
-                open_price = data[('Open', ticker)].iloc[-1] if len(data) > 0 else None
+                close = data[("Close", ticker)].iloc[-1] if len(data) > 0 else None
+                open_price = data[("Open", ticker)].iloc[-1] if len(data) > 0 else None
                 if close is not None and open_price is not None and open_price > 0:
                     change_pct = ((close - open_price) / open_price) * 100
                 else:
@@ -134,34 +134,35 @@ def check_significant_events(data):
         threshold = THRESHOLDS["portfolio_etf"] if is_etf else THRESHOLDS["portfolio_stock"]
         if abs(change) >= threshold:
             severity = "high" if abs(change) > threshold * 1.5 else "medium"
-            events.append({
-                "type": "portfolio_move",
-                "symbol": ticker,
-                "name": info["name"],
-                "sector": info["sector"],
-                "change": change,
-                "severity": severity,
-            })
+            events.append(
+                {
+                    "type": "portfolio_move",
+                    "symbol": ticker,
+                    "name": info["name"],
+                    "sector": info["sector"],
+                    "change": change,
+                    "severity": severity,
+                }
+            )
             should_interrupt = True
 
     your_sectors = set(info["sector"] for info in PORTFOLIO.values())
     for news in data.get("news", []):
         news_sector = news.get("sector")
         news_tickers = news.get("tickers", [])
-        affects_portfolio = (
-            news_sector in your_sectors or
-            any(t in PORTFOLIO for t in news_tickers)
-        )
+        affects_portfolio = news_sector in your_sectors or any(t in PORTFOLIO for t in news_tickers)
         if affects_portfolio and news.get("significance") in ["high", "medium"]:
             related = [t for t in news_tickers if t in PORTFOLIO]
-            events.append({
-                "type": "portfolio_news",
-                "headline": news.get("headline"),
-                "source": news.get("source"),
-                "related_tickers": related,
-                "sector": news_sector,
-                "severity": news.get("significance", "medium"),
-            })
+            events.append(
+                {
+                    "type": "portfolio_news",
+                    "headline": news.get("headline"),
+                    "source": news.get("source"),
+                    "related_tickers": related,
+                    "sector": news_sector,
+                    "severity": news.get("significance", "medium"),
+                }
+            )
             if news.get("significance") == "high":
                 should_interrupt = True
 
@@ -169,13 +170,15 @@ def check_significant_events(data):
         etf_data = data.get("holdings", {}).get(china_etf, {})
         etf_change = etf_data.get("change_pct")
         if etf_change is not None and abs(etf_change) >= THRESHOLDS["china_exposure"]:
-            events.append({
-                "type": "china_market_move",
-                "symbol": china_etf,
-                "change": etf_change,
-                "severity": "high" if abs(etf_change) > 6 else "medium",
-                "note": "Affects China portfolio (BABA, FXI, KWEB)",
-            })
+            events.append(
+                {
+                    "type": "china_market_move",
+                    "symbol": china_etf,
+                    "change": etf_change,
+                    "severity": "high" if abs(etf_change) > 6 else "medium",
+                    "note": "Affects China portfolio (BABA, FXI, KWEB)",
+                }
+            )
             should_interrupt = True
 
     return should_interrupt, events

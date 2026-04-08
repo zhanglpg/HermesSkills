@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from vault_index import PageInfo, parse_frontmatter, scan_vault
+from vault_index import PageInfo, scan_vault
 
 
 @dataclass
@@ -70,12 +70,14 @@ def check_orphans(pages: list[PageInfo], all_content: dict[Path, str]) -> list[L
         title = p.title
         # A page is orphaned if neither its stem nor title appears in any wikilink
         if stem not in referenced and title not in referenced:
-            issues.append(LintIssue(
-                severity="warning",
-                check="orphan-pages",
-                page=str(p.path),
-                message=f"No inbound wikilinks found for '{p.title}'",
-            ))
+            issues.append(
+                LintIssue(
+                    severity="warning",
+                    check="orphan-pages",
+                    page=str(p.path),
+                    message=f"No inbound wikilinks found for '{p.title}'",
+                )
+            )
     return issues
 
 
@@ -103,17 +105,19 @@ def check_broken_links(
             if alias_map:
                 hint = alias_map.get(_normalize_name(link_clean))
 
-            issues.append(LintIssue(
-                severity="warning",
-                check="broken-links",
-                page=str(path),
-                message=(
-                    f"Broken wikilink [[{link_clean}]] → did you mean [[{hint}]]?"
-                    if hint else
-                    f"Broken wikilink [[{link_clean}]]"
-                ),
-                suggested_fix=hint,
-            ))
+            issues.append(
+                LintIssue(
+                    severity="warning",
+                    check="broken-links",
+                    page=str(path),
+                    message=(
+                        f"Broken wikilink [[{link_clean}]] → did you mean [[{hint}]]?"
+                        if hint
+                        else f"Broken wikilink [[{link_clean}]]"
+                    ),
+                    suggested_fix=hint,
+                )
+            )
 
     return issues
 
@@ -128,12 +132,14 @@ def check_stale_concepts(pages: list[PageInfo], max_age_days: int = 90) -> list[
             continue
         date = p.date_updated or p.date_created or ""
         if date and date < cutoff:
-            issues.append(LintIssue(
-                severity="info",
-                check="stale-concepts",
-                page=str(p.path),
-                message=f"Concept '{p.title}' last updated {date} (>{max_age_days} days ago)",
-            ))
+            issues.append(
+                LintIssue(
+                    severity="info",
+                    check="stale-concepts",
+                    page=str(p.path),
+                    message=f"Concept '{p.title}' last updated {date} (>{max_age_days} days ago)",
+                )
+            )
     return issues
 
 
@@ -160,12 +166,14 @@ def check_missing_concepts(
     issues = []
     for name, count in sorted(mention_count.items(), key=lambda x: -x[1]):
         if count >= min_mentions and name not in concept_stems:
-            issues.append(LintIssue(
-                severity="info",
-                check="missing-concepts",
-                page="(none)",
-                message=f"'{name}' mentioned in {count} digests but has no concept page",
-            ))
+            issues.append(
+                LintIssue(
+                    severity="info",
+                    check="missing-concepts",
+                    page="(none)",
+                    message=f"'{name}' mentioned in {count} digests but has no concept page",
+                )
+            )
     return issues
 
 
@@ -181,12 +189,14 @@ def check_frontmatter(pages: list[PageInfo]) -> list[LintIssue]:
         if p.page_type == "digest" and not p.tags:
             missing.append("tags")
         if missing:
-            issues.append(LintIssue(
-                severity="warning",
-                check="frontmatter",
-                page=str(p.path),
-                message=f"Missing frontmatter: {', '.join(missing)}",
-            ))
+            issues.append(
+                LintIssue(
+                    severity="warning",
+                    check="frontmatter",
+                    page=str(p.path),
+                    message=f"Missing frontmatter: {', '.join(missing)}",
+                )
+            )
     return issues
 
 
@@ -205,12 +215,14 @@ def check_duplicate_concepts(pages: list[PageInfo]) -> list[LintIssue]:
     for _key, group in seen.items():
         if len(group) > 1:
             paths = ", ".join(str(p.path) for p in group)
-            issues.append(LintIssue(
-                severity="error",
-                check="duplicate-concepts",
-                page=paths,
-                message=f"Possible duplicate concept pages: {paths}",
-            ))
+            issues.append(
+                LintIssue(
+                    severity="error",
+                    check="duplicate-concepts",
+                    page=paths,
+                    message=f"Possible duplicate concept pages: {paths}",
+                )
+            )
     return issues
 
 
@@ -224,12 +236,14 @@ def check_stale_names(pages: list[PageInfo], max_age_days: int = 90) -> list[Lin
             continue
         date = p.date_updated or p.date_created or ""
         if date and date < cutoff:
-            issues.append(LintIssue(
-                severity="info",
-                check="stale-names",
-                page=str(p.path),
-                message=f"Name '{p.title}' last updated {date} (>{max_age_days} days ago)",
-            ))
+            issues.append(
+                LintIssue(
+                    severity="info",
+                    check="stale-names",
+                    page=str(p.path),
+                    message=f"Name '{p.title}' last updated {date} (>{max_age_days} days ago)",
+                )
+            )
     return issues
 
 
@@ -248,12 +262,14 @@ def check_duplicate_names(pages: list[PageInfo]) -> list[LintIssue]:
     for _key, group in seen.items():
         if len(group) > 1:
             paths = ", ".join(str(p.path) for p in group)
-            issues.append(LintIssue(
-                severity="error",
-                check="duplicate-names",
-                page=paths,
-                message=f"Possible duplicate name pages: {paths}",
-            ))
+            issues.append(
+                LintIssue(
+                    severity="error",
+                    check="duplicate-names",
+                    page=paths,
+                    message=f"Possible duplicate name pages: {paths}",
+                )
+            )
     return issues
 
 
@@ -283,9 +299,14 @@ def run_full_lint(
 
     issues: list[LintIssue] = []
     issues.extend(check_orphans(pages, all_content))
-    issues.extend(check_broken_links(
-        all_content, page_stems, page_titles, alias_map=alias_map,
-    ))
+    issues.extend(
+        check_broken_links(
+            all_content,
+            page_stems,
+            page_titles,
+            alias_map=alias_map,
+        )
+    )
     issues.extend(check_stale_concepts(pages, max_stale_days))
     issues.extend(check_missing_concepts(pages, all_content, concept_stems, min_concept_mentions))
     issues.extend(check_frontmatter(pages))
@@ -320,8 +341,7 @@ def format_lint_report(issues: list[LintIssue]) -> str:
     warnings = [i for i in issues if i.severity == "warning"]
     infos = [i for i in issues if i.severity == "info"]
 
-    lines.append(f"**{len(issues)} issues found:** "
-                 f"{len(errors)} errors, {len(warnings)} warnings, {len(infos)} info")
+    lines.append(f"**{len(issues)} issues found:** {len(errors)} errors, {len(warnings)} warnings, {len(infos)} info")
     lines.append("")
 
     for severity, group in [("error", errors), ("warning", warnings), ("info", infos)]:

@@ -17,10 +17,7 @@ class QueueDB:
     def __init__(self, db_path: str):
         db_path = os.path.expandvars(os.path.expanduser(db_path))
         if not os.path.isfile(db_path):
-            raise FileNotFoundError(
-                f"Queue database not found: {db_path}\n"
-                f"Run with --init to create a new queue."
-            )
+            raise FileNotFoundError(f"Queue database not found: {db_path}\nRun with --init to create a new queue.")
         self.db_path = db_path
         self._conn = sqlite3.connect(db_path)
         self._conn.row_factory = sqlite3.Row
@@ -140,15 +137,11 @@ class QueueDB:
         return cur.lastrowid
 
     def get_paper(self, paper_id: int) -> Optional[Dict[str, Any]]:
-        row = self._conn.execute(
-            "SELECT * FROM papers WHERE id = ?", (paper_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM papers WHERE id = ?", (paper_id,)).fetchone()
         return self._row_to_dict(row) if row else None
 
     def get_by_arxiv_id(self, arxiv_id: str) -> Optional[Dict[str, Any]]:
-        row = self._conn.execute(
-            "SELECT * FROM papers WHERE arxiv_id = ?", (arxiv_id,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM papers WHERE arxiv_id = ?", (arxiv_id,)).fetchone()
         return self._row_to_dict(row) if row else None
 
     def list_papers(
@@ -193,17 +186,13 @@ class QueueDB:
         )
         self._conn.commit()
 
-    def update_score(
-        self, paper_id: int, score: float, components: List[Dict[str, Any]]
-    ) -> None:
+    def update_score(self, paper_id: int, score: float, components: List[Dict[str, Any]]) -> None:
         now = self._now()
         self._conn.execute(
             "UPDATE papers SET priority_score = ?, updated_at = ? WHERE id = ?",
             (score, now, paper_id),
         )
-        self._conn.execute(
-            "DELETE FROM score_components WHERE paper_id = ?", (paper_id,)
-        )
+        self._conn.execute("DELETE FROM score_components WHERE paper_id = ?", (paper_id,))
         for comp in components:
             self._conn.execute(
                 """INSERT INTO score_components (paper_id, component, value, detail)
@@ -236,16 +225,12 @@ class QueueDB:
         return [self._row_to_dict(r) for r in rows]
 
     def get_score_components(self, paper_id: int) -> List[Dict[str, Any]]:
-        rows = self._conn.execute(
-            "SELECT * FROM score_components WHERE paper_id = ?", (paper_id,)
-        ).fetchall()
+        rows = self._conn.execute("SELECT * FROM score_components WHERE paper_id = ?", (paper_id,)).fetchall()
         return [dict(r) for r in rows]
 
     def get_all_topics(self) -> List[str]:
         """Get all unique topics across papers in the queue."""
-        rows = self._conn.execute(
-            "SELECT topics FROM papers WHERE topics IS NOT NULL"
-        ).fetchall()
+        rows = self._conn.execute("SELECT topics FROM papers WHERE topics IS NOT NULL").fetchall()
         all_topics: set = set()
         for row in rows:
             try:
@@ -259,13 +244,9 @@ class QueueDB:
     def get_stats(self) -> Dict[str, Any]:
         total = self._conn.execute("SELECT COUNT(*) FROM papers").fetchone()[0]
         by_status = {}
-        for row in self._conn.execute(
-            "SELECT status, COUNT(*) as cnt FROM papers GROUP BY status"
-        ).fetchall():
+        for row in self._conn.execute("SELECT status, COUNT(*) as cnt FROM papers GROUP BY status").fetchall():
             by_status[row["status"]] = row["cnt"]
-        avg_score = self._conn.execute(
-            "SELECT AVG(priority_score) FROM papers WHERE status = 'to-read'"
-        ).fetchone()[0]
+        avg_score = self._conn.execute("SELECT AVG(priority_score) FROM papers WHERE status = 'to-read'").fetchone()[0]
         return {
             "total": total,
             "by_status": by_status,

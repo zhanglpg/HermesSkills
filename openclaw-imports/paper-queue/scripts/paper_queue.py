@@ -25,15 +25,20 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import logging
 
+
 def get_agent_data_dir() -> str:
     """Return the agent's data directory, defaulting to /tmp."""
-    val = os.environ.get('AGENT_DATA_DIR')
+    val = os.environ.get("AGENT_DATA_DIR")
     if val:
         return val
-    fallback = os.path.expanduser('~/.openclaw')
-    os.environ['AGENT_DATA_DIR'] = fallback
-    logging.warning('AGENT_DATA_DIR is not set — falling back to %s. Set AGENT_DATA_DIR to control where skills write output.', fallback)
+    fallback = os.path.expanduser("~/.openclaw")
+    os.environ["AGENT_DATA_DIR"] = fallback
+    logging.warning(
+        "AGENT_DATA_DIR is not set — falling back to %s. Set AGENT_DATA_DIR to control where skills write output.",
+        fallback,
+    )
     return fallback
+
 
 def _shared_setup_logger(name, log_file=None, console_level=logging.INFO, **kwargs):
     """Minimal logger setup."""
@@ -46,21 +51,23 @@ def _shared_setup_logger(name, log_file=None, console_level=logging.INFO, **kwar
             os.makedirs(os.path.dirname(expanded), exist_ok=True)
             fh = logging.FileHandler(expanded)
             fh.setLevel(logging.DEBUG)
-            fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+            fh.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
             logger.addHandler(fh)
         except Exception:
             pass
     ch = logging.StreamHandler()
     ch.setLevel(console_level)
-    ch.setFormatter(logging.Formatter('%(message)s'))
+    ch.setFormatter(logging.Formatter("%(message)s"))
     logger.addHandler(ch)
     return logger
-from storage import QueueDB
-from sources import resolve_arxiv, resolve_twitter, resolve_manual, _extract_arxiv_id
+
+
 from scorer import score_paper
+from sources import _extract_arxiv_id, resolve_arxiv, resolve_manual, resolve_twitter
+from storage import QueueDB
 
 _SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_DEFAULT_CONFIG_PATH = os.path.join(_SKILL_DIR, 'references', 'config.json')
+_DEFAULT_CONFIG_PATH = os.path.join(_SKILL_DIR, "references", "config.json")
 
 
 def load_config(config_path: Optional[str] = None) -> dict:
@@ -81,9 +88,7 @@ def setup_logger(config: dict):
 
 def resolve_db_path(config: dict, db_override: Optional[str] = None) -> str:
     agent_dir = get_agent_data_dir()
-    db_path = db_override or config.get(
-        "db_path", os.path.join(agent_dir, "paper-queue", "queue.db")
-    )
+    db_path = db_override or config.get("db_path", os.path.join(agent_dir, "paper-queue", "queue.db"))
     return os.path.expandvars(os.path.expanduser(db_path))
 
 
@@ -91,15 +96,14 @@ def resolve_db_path(config: dict, db_override: Optional[str] = None) -> str:
 # Subcommands
 # ---------------------------------------------------------------------------
 
+
 def cmd_add(args, config, db, logger):
     """Add a paper to the queue."""
     if args.manual:
         if not args.title:
             print("Error: --title is required with --manual")
             return 1
-        paper = resolve_manual(
-            title=args.title, url=args.url, authors=args.authors, notes=args.notes
-        )
+        paper = resolve_manual(title=args.title, url=args.url, authors=args.authors, notes=args.notes)
     else:
         if not args.paper:
             print("Error: provide an arXiv ID, URL, or tweet link")
@@ -158,7 +162,8 @@ def _add_single_paper(paper: dict, db: QueueDB, logger, config: dict) -> bool:
     # Score immediately
     queue_topics = db.get_all_topics()
     total, components = score_paper(
-        paper, queue_topics,
+        paper,
+        queue_topics,
         weights=config.get("scoring_weights"),
         citation_count=paper.get("citation_count"),
     )
@@ -186,7 +191,7 @@ def cmd_list(args, config, db, logger):
 
     # Table header
     print(f"{'ID':>4}  {'Score':>5}  {'Status':<10}  {'Source':<8}  {'Title'}")
-    print(f"{'─'*4}  {'─'*5}  {'─'*10}  {'─'*8}  {'─'*40}")
+    print(f"{'─' * 4}  {'─' * 5}  {'─' * 10}  {'─' * 8}  {'─' * 40}")
     for p in papers:
         title = p["title"]
         if len(title) > 60:
@@ -205,7 +210,6 @@ def cmd_status(args, config, db, logger):
     db.update_status(args.id, args.new_status)
     print(f"Updated id={args.id}: {paper['title']} → {args.new_status}")
     return 0
-
 
 
 def cmd_score(args, config, db, logger):
@@ -254,7 +258,7 @@ def cmd_suggest(args, config, db, logger):
         return 0
 
     print(f"{'#':>2}  {'Title':<60}  {'arXiv ID'}")
-    print(f"{'─'*2}  {'─'*60}  {'─'*15}")
+    print(f"{'─' * 2}  {'─' * 60}  {'─' * 15}")
     for i, s in enumerate(suggestions, 1):
         title = s["title"]
         if len(title) > 57:
@@ -282,6 +286,7 @@ def cmd_stats(args, config, db, logger):
 # ---------------------------------------------------------------------------
 # CLI argument parsing
 # ---------------------------------------------------------------------------
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

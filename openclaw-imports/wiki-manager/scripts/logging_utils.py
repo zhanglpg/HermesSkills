@@ -7,19 +7,18 @@ from typing import Optional
 
 def get_agent_data_dir() -> str:
     """Return the agent's data directory from AGENT_DATA_DIR env var.
-    
+
     Defaults to ~/.openclaw when not set (where openclaw data lives).
     """
-    val = os.environ.get('AGENT_DATA_DIR')
+    val = os.environ.get("AGENT_DATA_DIR")
     if val:
         return val
-    fallback = os.path.expanduser('~/.openclaw')
+    fallback = os.path.expanduser("~/.openclaw")
     logging.warning(
-        "AGENT_DATA_DIR is not set — falling back to %s. "
-        "Set AGENT_DATA_DIR to control where skills write output.",
+        "AGENT_DATA_DIR is not set — falling back to %s. Set AGENT_DATA_DIR to control where skills write output.",
         fallback,
     )
-    os.environ['AGENT_DATA_DIR'] = fallback
+    os.environ["AGENT_DATA_DIR"] = fallback
     return fallback
 
 
@@ -28,8 +27,8 @@ def setup_logger(
     log_file: Optional[str] = None,
     console_level: int = logging.INFO,
     file_level: int = logging.DEBUG,
-    console_format: str = '%(message)s',
-    file_format: str = '%(asctime)s - %(levelname)s - %(message)s',
+    console_format: str = "%(message)s",
+    file_format: str = "%(asctime)s - %(levelname)s - %(message)s",
 ) -> logging.Logger:
     """Configure a logger with console and optional file output."""
     logger = logging.getLogger(name)

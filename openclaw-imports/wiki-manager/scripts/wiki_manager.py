@@ -36,27 +36,26 @@ _SKILLS_ROOT = _SKILL_DIR.parent
 sys.path.insert(0, str(_SCRIPT_DIR))
 sys.path.insert(0, str(_SKILLS_ROOT / "shared"))
 
-from logging_utils import get_agent_data_dir, setup_logger
-from vault_index import parse_frontmatter, scan_vault, build_index, update_index, update_concept_index
-from log_writer import append_log
+from compile_checker import build_page_batches, format_compile_report, parse_llm_findings
 from concept_manager import (
+    create_concept_page,
     extract_concepts_from_digest,
     find_concept_page,
-    create_concept_page,
-    update_concept_page,
     list_concepts,
+    update_concept_page,
 )
+from link_fixer import apply_link_fixes, scan_broken_links
+from lint_checker import format_lint_report, run_full_lint
+from log_writer import append_log
+from logging_utils import get_agent_data_dir, setup_logger
 from name_manager import (
+    create_name_page,
     extract_names_from_digest,
     find_name_page,
-    create_name_page,
-    update_name_page,
     list_names,
+    update_name_page,
 )
-from lint_checker import run_full_lint, format_lint_report
-from compile_checker import format_compile_report, build_page_batches, parse_llm_findings
-from link_fixer import scan_broken_links, apply_link_fixes
-
+from vault_index import parse_frontmatter, scan_vault, update_index
 
 # ---------------------------------------------------------------------------
 # Config
@@ -86,6 +85,7 @@ def _make_llm_fn(config: dict, logger):
     def llm_fn(prompt: str) -> str:
         try:
             from llm_utils import run_gemini
+
             return run_gemini(prompt, timeout=timeout, logger=logger)
         except ImportError:
             logger.error("shared/llm_utils.py not found — cannot make LLM calls")
@@ -153,9 +153,7 @@ def cmd_ingest(args, config: dict, logger) -> None:
         logger.info("No concepts in frontmatter — falling back to LLM extraction")
         existing = list_concepts(concept_dir)
         existing_names = [e["title"] for e in existing]
-        concepts = extract_concepts_from_digest(
-            digest_content, existing_names, llm_fn, max_concepts
-        )
+        concepts = extract_concepts_from_digest(digest_content, existing_names, llm_fn, max_concepts)
         logger.info(f"Extracted concepts via LLM: {concepts}")
 
     # 3.5 Get names — prefer frontmatter, fall back to LLM extraction
@@ -170,9 +168,7 @@ def cmd_ingest(args, config: dict, logger) -> None:
         logger.info("No names in frontmatter — falling back to LLM extraction")
         existing_names_list = list_names(names_dir)
         existing_name_strings = [n["title"] for n in existing_names_list]
-        name_list = extract_names_from_digest(
-            digest_content, existing_name_strings, llm_fn, max_names
-        )
+        name_list = extract_names_from_digest(digest_content, existing_name_strings, llm_fn, max_names)
         logger.info(f"Extracted names via LLM: {name_list}")
 
     # 3.6 Build existing page names for wikilink context
@@ -184,23 +180,27 @@ def cmd_ingest(args, config: dict, logger) -> None:
     }
 
     # --extract-only: output extracted data as JSON, skip LLM calls
-    if getattr(args, 'extract_only', False) is True:
+    if getattr(args, "extract_only", False) is True:
         concepts_info = []
         for c in concepts:
             existing_path = find_concept_page(c, concept_dir)
-            concepts_info.append({
-                "name": c,
-                "exists": existing_path is not None,
-                "path": str(existing_path) if existing_path else None,
-            })
+            concepts_info.append(
+                {
+                    "name": c,
+                    "exists": existing_path is not None,
+                    "path": str(existing_path) if existing_path else None,
+                }
+            )
         names_info = []
         for n in name_list:
             existing_path = find_name_page(n, names_dir)
-            names_info.append({
-                "name": n,
-                "exists": existing_path is not None,
-                "path": str(existing_path) if existing_path else None,
-            })
+            names_info.append(
+                {
+                    "name": n,
+                    "exists": existing_path is not None,
+                    "path": str(existing_path) if existing_path else None,
+                }
+            )
         extract_data = {
             "digest_path": str(digest_path),
             "digest_title": digest_title,
@@ -229,7 +229,9 @@ def cmd_ingest(args, config: dict, logger) -> None:
             touched_pages.append(f"Updated concept: [[{concept_name}]]")
         else:
             logger.info(f"  Creating concept: {concept_name}")
-            create_concept_page(concept_name, digest_content, concept_dir, llm_fn, existing_page_names, domain=digest_domain)
+            create_concept_page(
+                concept_name, digest_content, concept_dir, llm_fn, existing_page_names, domain=digest_domain
+            )
             touched_pages.append(f"Created concept: [[{concept_name}]]")
 
     # 5. Create or update name pages
@@ -260,10 +262,14 @@ def cmd_ingest(args, config: dict, logger) -> None:
 
     # Summary
     print(f"\n✓ Ingested: {digest_title}")
-    print(f"  Concepts: {len(concepts)} ({len([t for t in touched_pages if 'Created concept' in t])} new, "
-          f"{len([t for t in touched_pages if 'Updated concept' in t])} updated)")
-    print(f"  Names: {len(name_list)} ({len([t for t in touched_pages if 'Created name' in t])} new, "
-          f"{len([t for t in touched_pages if 'Updated name' in t])} updated)")
+    print(
+        f"  Concepts: {len(concepts)} ({len([t for t in touched_pages if 'Created concept' in t])} new, "
+        f"{len([t for t in touched_pages if 'Updated concept' in t])} updated)"
+    )
+    print(
+        f"  Names: {len(name_list)} ({len([t for t in touched_pages if 'Created name' in t])} new, "
+        f"{len([t for t in touched_pages if 'Updated name' in t])} updated)"
+    )
     print("  Index and log updated")
 
 
@@ -333,11 +339,13 @@ def cmd_fix_links(args, config: dict, logger) -> None:
 
     if sub == "scan":
         import json as _json
+
         result = scan_broken_links(vault_root, gen_notes_dir)
         print(_json.dumps(result, indent=2))
 
     elif sub == "apply":
         import json as _json
+
         try:
             fixes = _json.loads(args.mapping)
         except _json.JSONDecodeError as e:
@@ -376,6 +384,7 @@ def cmd_compile(args, config: dict, logger) -> None:
 
     if sub == "extract":
         from lint_checker import _read_all_pages
+
         root = Path(vault_root)
         pages = scan_vault(vault_root, gen_notes_dir)
         all_content = _read_all_pages(root, gen_notes_dir)
@@ -391,23 +400,22 @@ def cmd_compile(args, config: dict, logger) -> None:
         # Serialize batches
         batches_json = []
         for batch in batches:
-            batches_json.append({
-                "label": batch["label"],
-                "page_count": len(batch["pages"]),
-                "pages": [
-                    {"title": p.title, "type": p.page_type,
-                     "tags": p.tags, "stem": p.path.stem}
-                    for p in batch["pages"]
-                ],
-                "contents": batch["contents"],
-            })
+            batches_json.append(
+                {
+                    "label": batch["label"],
+                    "page_count": len(batch["pages"]),
+                    "pages": [
+                        {"title": p.title, "type": p.page_type, "tags": p.tags, "stem": p.path.stem}
+                        for p in batch["pages"]
+                    ],
+                    "contents": batch["contents"],
+                }
+            )
 
         # Run deterministic lint
         lint_issues = run_full_lint(vault_root, gen_notes_dir)
         lint_json = [
-            {"severity": i.severity, "check": i.check,
-             "page": i.page, "message": i.message}
-            for i in lint_issues
+            {"severity": i.severity, "check": i.check, "page": i.page, "message": i.message} for i in lint_issues
         ]
 
         extract_data = {
@@ -490,8 +498,7 @@ def main() -> None:
     # ingest
     p_ingest = sub.add_parser("ingest", help="Ingest a digest into the wiki")
     p_ingest.add_argument("digest_path", help="Path to the digest markdown file")
-    p_ingest.add_argument("--extract-only", action="store_true",
-                          help="Output extracted data as JSON (no LLM calls)")
+    p_ingest.add_argument("--extract-only", action="store_true", help="Output extracted data as JSON (no LLM calls)")
 
     # index
     sub.add_parser("index", help="Rebuild index.md")

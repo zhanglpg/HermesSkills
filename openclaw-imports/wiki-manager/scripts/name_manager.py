@@ -14,9 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
 
+from concept_manager import _format_existing_pages, _normalize_name, _sanitize_filename, _sanitize_llm_output
 from vault_index import parse_frontmatter
-from concept_manager import _normalize_name, _sanitize_llm_output, _sanitize_filename, _format_existing_pages
-
 
 # ---------------------------------------------------------------------------
 # Alias handling
@@ -216,7 +215,7 @@ def update_name_page(
         "Update the name page to incorporate insights from the new paper. "
         "Specifically:\n"
         "1. Update the Overview if the new paper changes understanding\n"
-        f'2. Add `[[{digest_title}]]` to Key Contributions with a one-line note\n'
+        f"2. Add `[[{digest_title}]]` to Key Contributions with a one-line note\n"
         "3. Update Timeline if this represents a new milestone\n"
         "4. Add any new Related Names or Related Concepts as wikilinks\n"
         f"5. Update date-updated to {today} in the frontmatter\n"
@@ -237,9 +236,7 @@ def update_name_page(
     else:
         # Fallback: just append a reference to the new paper
         append_text = (
-            f"\n\n### Update ({today})\n\n"
-            f"New paper ingested: [[{digest_title}]]\n\n"
-            f"*Auto-update via wiki-manager.*\n"
+            f"\n\n### Update ({today})\n\nNew paper ingested: [[{digest_title}]]\n\n*Auto-update via wiki-manager.*\n"
         )
         with open(name_path, "a", encoding="utf-8") as f:
             f.write(append_text)

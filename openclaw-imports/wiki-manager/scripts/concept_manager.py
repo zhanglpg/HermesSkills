@@ -16,7 +16,6 @@ from typing import Callable, Optional
 
 from vault_index import parse_frontmatter
 
-
 # ---------------------------------------------------------------------------
 # Alias handling
 # ---------------------------------------------------------------------------
@@ -119,11 +118,9 @@ def _sanitize_llm_output(text: str) -> str:
         result = m.group(1).strip()
 
     # Detect and remove duplicated frontmatter — keep only the last occurrence
-    fm_blocks = list(
-        re.finditer(r"^---\s*\n.*?\n---\s*\n", result, re.DOTALL | re.MULTILINE)
-    )
+    fm_blocks = list(re.finditer(r"^---\s*\n.*?\n---\s*\n", result, re.DOTALL | re.MULTILINE))
     if len(fm_blocks) >= 2:
-        result = result[fm_blocks[-1].start():]
+        result = result[fm_blocks[-1].start() :]
 
     return result.strip()
 
@@ -272,7 +269,7 @@ def update_concept_page(
         "Update the concept page to incorporate insights from the new paper. "
         "Specifically:\n"
         "1. Update the Overview if the new paper changes understanding\n"
-        f'2. Add `[[{digest_title}]]` to Key Papers with a one-line contribution note\n'
+        f"2. Add `[[{digest_title}]]` to Key Papers with a one-line contribution note\n"
         "3. Update Evolution if this represents a shift or advancement, or if it is a predecessor to previous papers that forms lineage of the development\n"
         "4. Update Open Questions — add new ones, mark resolved ones\n"
         "5. Add any new Related Concepts as wikilinks\n"
@@ -294,9 +291,7 @@ def update_concept_page(
     else:
         # Fallback: just append a reference to the new paper
         append_text = (
-            f"\n\n### Update ({today})\n\n"
-            f"New paper ingested: [[{digest_title}]]\n\n"
-            f"*Auto-update via wiki-manager.*\n"
+            f"\n\n### Update ({today})\n\nNew paper ingested: [[{digest_title}]]\n\n*Auto-update via wiki-manager.*\n"
         )
         with open(concept_path, "a", encoding="utf-8") as f:
             f.write(append_text)

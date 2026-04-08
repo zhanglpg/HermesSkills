@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from sources import ATOM_NS, ARXIV_NS, _parse_arxiv_entry, _fetch_text, ARXIV_API_URL
+from sources import ARXIV_API_URL, ATOM_NS, _fetch_text, _parse_arxiv_entry
 from storage import QueueDB
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def _extract_topics_from_digests(digest_dir: str) -> List[str]:
     if not digest_dir or not os.path.isdir(digest_dir):
         return topics
 
-    category_pattern = re.compile(r'\b(cs\.\w{2,4}|stat\.\w{2,4}|math\.\w{2,4}|eess\.\w{2,4})\b')
+    category_pattern = re.compile(r"\b(cs\.\w{2,4}|stat\.\w{2,4}|math\.\w{2,4}|eess\.\w{2,4})\b")
 
     for md_file in Path(digest_dir).glob("*.md"):
         try:
@@ -96,6 +96,7 @@ def suggest_related(
             topics = paper["topics"]
             if isinstance(topics, str):
                 import json
+
                 try:
                     topics = json.loads(topics)
                 except (ValueError, TypeError):

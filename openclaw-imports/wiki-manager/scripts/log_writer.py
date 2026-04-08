@@ -82,5 +82,5 @@ def read_log(log_path: str | Path, last_n: int = 20) -> str:
     lines = text.split("\n")
 
     # Return last N non-empty lines (approximate)
-    tail = lines[-last_n * 3:] if len(lines) > last_n * 3 else lines
+    tail = lines[-last_n * 3 :] if len(lines) > last_n * 3 else lines
     return "\n".join(tail)
