@@ -56,7 +56,10 @@ python3 $SKILL_DIR/scripts/paper_queue.py stats
 
 ## Storage
 
-Papers are stored in a SQLite database. Default path: `~/.hermes/skills/openclaw-imports/paper-queue/queue.db`
+Papers are stored in a SQLite database. The path is controlled by `db_path` in `references/config.json`.  
+**Current path:** `~/.hermes/skills/openclaw-imports/paper-queue/.paper_queue/queue.db`
+
+> **Note:** The DB lives in a `.paper_queue/` hidden directory within this skill folder. This directory is git-ignored to keep the repo clean. If you see "Queue database not found", check `references/config.json` → `db_path`.
 
 ## Dependencies
 

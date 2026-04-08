@@ -1,7 +1,4 @@
 *.db
-*.db-shm
-*.db-wal
-*.pyc
 __pycache__/
 .DS_Store
 .pytest_cache/
@@ -9,3 +6,4 @@ htmlcov/
 .coverage
 *.egg-info/
 .ruff_cache/
+.paper_queue/
