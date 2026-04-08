@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 # arXiv patterns (reused from paper-digest)
 # ---------------------------------------------------------------------------
 
-ARXIV_ID_PATTERN = re.compile(r'^(\d{4}\.\d{4,5})(v\d+)?$')
-ARXIV_ABS_PATTERN = re.compile(r'arxiv\.org/abs/(\d{4}\.\d{4,5})(v\d+)?')
-ARXIV_PDF_PATTERN = re.compile(r'arxiv\.org/pdf/(\d{4}\.\d{4,5})(v\d+)?')
+ARXIV_ID_PATTERN = re.compile(r"^(\d{4}\.\d{4,5})(v\d+)?$")
+ARXIV_ABS_PATTERN = re.compile(r"arxiv\.org/abs/(\d{4}\.\d{4,5})(v\d+)?")
+ARXIV_PDF_PATTERN = re.compile(r"arxiv\.org/pdf/(\d{4}\.\d{4,5})(v\d+)?")
 
 ARXIV_API_URL = "http://export.arxiv.org/api/query"
 ATOM_NS = "{http://www.w3.org/2005/Atom}"
@@ -28,7 +28,7 @@ ARXIV_NS = "{http://arxiv.org/schemas/atom}"
 
 # Patterns for finding paper URLs in tweet content
 PAPER_URL_PATTERNS = [
-    re.compile(r'https?://arxiv\.org/(?:abs|pdf)/\d{4}\.\d{4,5}(?:v\d+)?'),
+    re.compile(r"https?://arxiv\.org/(?:abs|pdf)/\d{4}\.\d{4,5}(?:v\d+)?"),
     re.compile(r'https?://(?:www\.)?semanticscholar\.org/paper/[^\s"<>]+'),
     re.compile(r'https?://(?:www\.)?openreview\.net/(?:forum|pdf)\?id=[^\s"<>]+'),
     re.compile(r'https?://(?:papers\.nips\.cc|proceedings\.neurips\.cc)/[^\s"<>]+'),
@@ -76,7 +76,7 @@ def _parse_arxiv_entry(entry: ET.Element) -> Dict[str, Any]:
     url = None
     if id_el is not None and id_el.text:
         url = id_el.text.strip()
-        m = re.search(r'(\d{4}\.\d{4,5})(v\d+)?', url)
+        m = re.search(r"(\d{4}\.\d{4,5})(v\d+)?", url)
         if m:
             arxiv_id = m.group(1) + (m.group(2) or "")
 
@@ -121,7 +121,7 @@ def fetch_arxiv_metadata(arxiv_id: str) -> Dict[str, Any]:
         URLError: If the API request fails.
     """
     # Strip version for the API query (it returns latest by default)
-    base_id = re.sub(r'v\d+$', '', arxiv_id)
+    base_id = re.sub(r"v\d+$", "", arxiv_id)
     api_url = f"{ARXIV_API_URL}?id_list={base_id}&max_results=1"
     logger.info("Fetching arXiv metadata for %s", arxiv_id)
 
@@ -201,7 +201,7 @@ def resolve_twitter(tweet_url: str) -> List[Dict[str, Any]]:
     papers: list = []
     # Try to extract tweet author from URL for source_meta
     tweet_author = None
-    author_match = re.search(r'(?:twitter|x)\.com/(\w+)/status', tweet_url)
+    author_match = re.search(r"(?:twitter|x)\.com/(\w+)/status", tweet_url)
     if author_match:
         tweet_author = author_match.group(1)
 
@@ -217,16 +217,18 @@ def resolve_twitter(tweet_url: str) -> List[Dict[str, Any]]:
                 logger.warning("Failed to resolve arXiv paper from tweet: %s", e)
         else:
             # Non-arXiv paper URL — add as manual with URL
-            papers.append({
-                "title": f"Paper from {url}",
-                "arxiv_id": None,
-                "authors": None,
-                "abstract": None,
-                "url": url,
-                "source": "twitter",
-                "source_meta": {"tweet_url": tweet_url, "tweet_author": tweet_author},
-                "topics": [],
-            })
+            papers.append(
+                {
+                    "title": f"Paper from {url}",
+                    "arxiv_id": None,
+                    "authors": None,
+                    "abstract": None,
+                    "url": url,
+                    "source": "twitter",
+                    "source_meta": {"tweet_url": tweet_url, "tweet_author": tweet_author},
+                    "topics": [],
+                }
+            )
 
     return papers
 

@@ -8,11 +8,10 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
-from vault_index import PageInfo, scan_vault
 from lint_checker import _read_all_pages
-
+from vault_index import PageInfo, scan_vault
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -88,21 +87,25 @@ def build_page_batches(
         for i in range(0, len(group), max_batch_size):
             chunk = group[i : i + max_batch_size]
             suffix = f" (part {i // max_batch_size + 1})" if len(group) > max_batch_size else ""
-            batches.append({
-                "label": f"{tag}{suffix}",
-                "pages": chunk,
-                "contents": _truncated_contents(chunk, all_content, max_chars_per_page),
-            })
+            batches.append(
+                {
+                    "label": f"{tag}{suffix}",
+                    "pages": chunk,
+                    "contents": _truncated_contents(chunk, all_content, max_chars_per_page),
+                }
+            )
 
     # Merge assorted small groups into batches
     if assorted_pages:
         for i in range(0, len(assorted_pages), max_batch_size):
             chunk = assorted_pages[i : i + max_batch_size]
-            batches.append({
-                "label": "assorted",
-                "pages": chunk,
-                "contents": _truncated_contents(chunk, all_content, max_chars_per_page),
-            })
+            batches.append(
+                {
+                    "label": "assorted",
+                    "pages": chunk,
+                    "contents": _truncated_contents(chunk, all_content, max_chars_per_page),
+                }
+            )
 
     return batches
 
@@ -134,12 +137,7 @@ def build_batch_prompt(batch: dict, prompt_template: str) -> str:
         stem = p.path.stem
         tags_str = ", ".join(p.tags) if p.tags else "none"
         content = batch["contents"].get(stem, "")
-        parts.append(
-            f"### {p.title} ({p.page_type})\n"
-            f"Tags: {tags_str}\n"
-            f"Path: {stem}\n\n"
-            f"{content}\n\n---"
-        )
+        parts.append(f"### {p.title} ({p.page_type})\nTags: {tags_str}\nPath: {stem}\n\n{content}\n\n---")
     pages_content = "\n\n".join(parts)
     return prompt_template.replace("{pages_content}", pages_content)
 
@@ -201,12 +199,14 @@ def parse_llm_findings(llm_response: str) -> list[CompileFinding]:
         pages = [str(p) for p in pages]
         description = str(item.get("description", ""))
         severity = _CATEGORY_SEVERITY.get(category, "info")
-        findings.append(CompileFinding(
-            category=category,
-            severity=severity,
-            pages=pages,
-            description=description,
-        ))
+        findings.append(
+            CompileFinding(
+                category=category,
+                severity=severity,
+                pages=pages,
+                description=description,
+            )
+        )
 
     return findings
 
@@ -258,7 +258,6 @@ def format_compile_report(
         lines.append("All structural checks passed.")
         lines.append("")
     else:
-        from lint_checker import LintIssue
         by_severity: dict[str, list] = {}
         for issue in lint_issues:
             by_severity.setdefault(issue.severity, []).append(issue)
@@ -363,9 +362,7 @@ def run_compile(
     prompt_dir = Path(__file__).resolve().parent.parent / "prompts"
     cross_page_template = _load_prompt(prompt_dir / "compile-cross-page-prompt.md")
     gap_template = _load_prompt(prompt_dir / "compile-gap-analysis-prompt.md")
-    schema_text = _load_prompt(
-        Path(__file__).resolve().parent.parent / "references" / "schema.md"
-    )
+    schema_text = _load_prompt(Path(__file__).resolve().parent.parent / "references" / "schema.md")
 
     all_findings: list[CompileFinding] = []
 
@@ -374,10 +371,7 @@ def run_compile(
 
     for i, batch in enumerate(batches, 1):
         if logger:
-            logger.info(
-                f"Compiling batch {i}/{len(batches)}: {batch['label']} "
-                f"({len(batch['pages'])} pages)"
-            )
+            logger.info(f"Compiling batch {i}/{len(batches)}: {batch['label']} ({len(batch['pages'])} pages)")
         prompt = build_batch_prompt(batch, cross_page_template)
         try:
             response = llm_fn(prompt)

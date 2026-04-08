@@ -18,7 +18,6 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Optional
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _SKILL_DIR = _SCRIPT_DIR.parent
@@ -26,11 +25,10 @@ _SKILLS_ROOT = _SKILL_DIR.parent
 sys.path.insert(0, str(_SCRIPT_DIR))
 sys.path.insert(0, str(_SKILLS_ROOT / "shared"))
 
-from vault_index import PageInfo, parse_frontmatter, scan_vault
-from concept_manager import _normalize_name, _load_alias_map
-from name_manager import _load_name_alias_map
+from concept_manager import _load_alias_map, _normalize_name
 from lint_checker import _extract_wikilinks, _read_all_pages
-
+from name_manager import _load_name_alias_map
+from vault_index import parse_frontmatter, scan_vault
 
 # ---------------------------------------------------------------------------
 # Vault-wide alias map
@@ -152,11 +150,13 @@ def scan_broken_links(
                 continue
             # Check alias map for a hint
             alias_hint = alias_map.get(_normalize_name(link_clean))
-            broken_links.append({
-                "file": str(file_path),
-                "link": link_clean,
-                "alias_hint": alias_hint,
-            })
+            broken_links.append(
+                {
+                    "file": str(file_path),
+                    "link": link_clean,
+                    "alias_hint": alias_hint,
+                }
+            )
 
     return {
         "existing_pages": existing_pages,
@@ -203,9 +203,7 @@ def apply_link_fixes(
         for old_target, new_target in fixes.items():
             if old_target not in content:
                 continue
-            pattern = re.compile(
-                r"\[\[" + re.escape(old_target) + r"(\|[^\]]*)?\]\]"
-            )
+            pattern = re.compile(r"\[\[" + re.escape(old_target) + r"(\|[^\]]*)?\]\]")
             replaced = pattern.sub(
                 lambda m, nt=new_target: f"[[{nt}{m.group(1) or ''}]]",
                 new_content,
@@ -238,6 +236,7 @@ def _load_config() -> dict:
         return {}
     try:
         from logging_utils import get_agent_data_dir
+
         get_agent_data_dir()
     except Exception:
         pass

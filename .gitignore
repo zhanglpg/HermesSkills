@@ -4,3 +4,8 @@
 *.pyc
 __pycache__/
 .DS_Store
+.pytest_cache/
+htmlcov/
+.coverage
+*.egg-info/
+.ruff_cache/

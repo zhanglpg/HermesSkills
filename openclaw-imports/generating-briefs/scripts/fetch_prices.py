@@ -6,8 +6,8 @@ Outputs JSON with current prices and daily changes.
 Usage:
     python3 scripts/fetch_prices.py [--tickers GOOG,NVDA,TSM,BABA,SPY,FXI,KWEB]
 """
+
 import json
-import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -19,6 +19,7 @@ except ImportError:
     import yfinance as yf
 
 DEFAULT_TICKERS = ["GOOG", "NVDA", "TSM", "BABA", "SPY", "FXI", "KWEB", "QQQ"]
+
 
 def main():
     tickers_str = None
@@ -51,6 +52,7 @@ def main():
     }
 
     print(json.dumps(output, indent=2))
+
 
 if __name__ == "__main__":
     main()

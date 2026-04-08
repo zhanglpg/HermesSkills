@@ -111,9 +111,7 @@ def _extract_summary(text: str, frontmatter: dict) -> str:
         return tldr_match.group(1).strip().split("\n")[0].strip()
 
     # Look for Main Idea section
-    main_match = re.search(
-        r"##\s+(?:1\.\s+)?Main Idea[^\n]*\n+(.+?)(?:\n\n|\n##|\Z)", text, re.DOTALL
-    )
+    main_match = re.search(r"##\s+(?:1\.\s+)?Main Idea[^\n]*\n+(.+?)(?:\n\n|\n##|\Z)", text, re.DOTALL)
     if main_match:
         return main_match.group(1).strip().split("\n")[0].strip()
 
@@ -172,7 +170,15 @@ def scan_vault(vault_root: str, gen_notes_dir: str = "gen-notes") -> list[PageIn
     pages: list[PageInfo] = []
     for md_file in sorted(gen_path.rglob("*.md")):
         # Skip index, log, schema, and lint reports
-        if md_file.name in ("index.md", "concept_index.md", "name_index.md", "log.md", "schema.md", "_lint-report.md", "_scan-report.md"):
+        if md_file.name in (
+            "index.md",
+            "concept_index.md",
+            "name_index.md",
+            "log.md",
+            "schema.md",
+            "_lint-report.md",
+            "_scan-report.md",
+        ):
             continue
 
         try:
@@ -231,8 +237,10 @@ def build_index(pages: list[PageInfo]) -> str:
     lines.append("")
     lines.append("# Knowledge Wiki Index")
     lines.append("")
-    lines.append(f"> Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}. "
-                 "Do not edit manually — run `wiki_manager.py index` to rebuild.")
+    lines.append(
+        f"> Auto-generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}. "
+        "Do not edit manually — run `wiki_manager.py index` to rebuild."
+    )
     lines.append("")
 
     # Group by type
@@ -450,8 +458,7 @@ def build_concept_index(concept_dir: Path) -> str:
     lines.append("")
     lines.append("# Concept Index")
     lines.append("")
-    lines.append("> Auto-generated. Do not edit manually "
-                 "— run `wiki_manager.py index` to rebuild.")
+    lines.append("> Auto-generated. Do not edit manually — run `wiki_manager.py index` to rebuild.")
     lines.append("")
 
     for title, aliases in concepts:
@@ -529,8 +536,7 @@ def build_name_index(names_dir: Path) -> str:
     lines.append("")
     lines.append("# Name Index")
     lines.append("")
-    lines.append("> Auto-generated. Do not edit manually "
-                 "— run `wiki_manager.py index` to rebuild.")
+    lines.append("> Auto-generated. Do not edit manually — run `wiki_manager.py index` to rebuild.")
     lines.append("")
 
     for title, aliases in names:

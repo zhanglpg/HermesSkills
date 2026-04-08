@@ -33,6 +33,7 @@ DEFAULT_WEIGHTS = {
 # Citation scoring
 # ---------------------------------------------------------------------------
 
+
 def fetch_citation_count(arxiv_id: str, timeout: int = 10) -> int:
     """Fetch citation count from Semantic Scholar API.
 
@@ -44,7 +45,7 @@ def fetch_citation_count(arxiv_id: str, timeout: int = 10) -> int:
         Citation count, or 0 if not found / request fails.
     """
     # Strip version suffix for Semantic Scholar
-    base_id = re.sub(r'v\d+$', '', arxiv_id)
+    base_id = re.sub(r"v\d+$", "", arxiv_id)
     url = f"{SEMANTIC_SCHOLAR_API}/ArXiv:{base_id}?fields=citationCount"
     req = Request(url, headers={"User-Agent": "OpenClaw-PaperQueue/1.0"})
     try:
@@ -71,6 +72,7 @@ def score_citations(count: int) -> Tuple[float, str]:
 # ---------------------------------------------------------------------------
 # Recency scoring
 # ---------------------------------------------------------------------------
+
 
 def score_recency(published_date: Optional[str]) -> Tuple[float, str]:
     """Score based on how recently the paper was published.
@@ -113,6 +115,7 @@ def score_recency(published_date: Optional[str]) -> Tuple[float, str]:
 # ---------------------------------------------------------------------------
 # Queue affinity scoring
 # ---------------------------------------------------------------------------
+
 
 def score_queue_affinity(
     paper_topics: List[str],
@@ -158,6 +161,7 @@ def score_queue_affinity(
 # ---------------------------------------------------------------------------
 # Combined scoring
 # ---------------------------------------------------------------------------
+
 
 def score_paper(
     paper: Dict[str, Any],
