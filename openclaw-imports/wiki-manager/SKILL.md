@@ -140,10 +140,18 @@ See `references/config.json` for vault paths. All paths are relative to `vault_r
 ## Dependencies
 
 | Tool | Purpose |
-|------|---------||
+|------|---------
 | Python 3.10+ | Runtime |
 
 Gemini CLI is only needed for the ingest fallback pipeline (`ingest` without `--extract-only`).
+
+## Pitfalls
+
+- **Script path:** The copy at `~/.hermes/skills/openclaw-imports/wiki-manager/scripts/wiki_manager.py` has a missing `logging_utils` dependency. Use the openclaw version at `~/.openclaw/skills/custom/wiki-manager/scripts/wiki_manager.py` instead (it has the full dependency tree).
+- **Frontmatter format is critical:** Concepts and names MUST be in YAML frontmatter at the **top** of the digest file with `---` delimiters. If missing, the script falls back to LLM extraction via Gemini CLI which takes 5-10 min and often times out. Always verify frontmatter before running ingest.
+- **Frontmatter values must be plain strings:** Use `- Multi-Agent Systems` not `- [[Multi-Agent Systems]]`. Wikilink syntax in YAML values breaks parsing.
+- **Agent-primary workflow is more reliable:** Instead of letting `ingest` run end-to-end (which makes sequential Gemini calls), prefer: (1) `ingest <path> --extract-only` to get metadata, (2) create/update concept and name pages yourself or via subagent delegation, (3) run `index` to rebuild. This avoids timeouts and gives you control over page quality.
+- **Timeout budget:** If using the full ingest pipeline, set `timeout=600+`. With 3 concepts + 5 names, expect 5-10 minutes of sequential Gemini CLI calls. Multiple polls can interfere — use a single long wait.
 
 ## Pitfalls
 

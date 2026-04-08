@@ -65,6 +65,36 @@ source: https://arxiv.org/abs/XXXX.XXXXX
 - **Tags:** Use both inline `#tags` in frontmatter AND `[[Category]]` wikilinks for categories
 - **Cross-link into existing notes:** If a paper directly extends or contradicts an existing vault note, mention it in the Connections section
 
+## Frontmatter Requirements (CRITICAL for wiki-manager ingest)
+
+The digest MUST have proper YAML frontmatter **at the top** of the file with `---` delimiters. The wiki-manager parses this to find concepts and names — without it, ingest falls back to slow LLM extraction that often times out.
+
+```yaml
+---
+date: YYYY-MM-DD
+status: 📥
+tags:
+  - AI
+  - LLM
+concepts:
+  - Concept One
+  - Concept Two
+names:
+  - Name One
+  - Name Two
+categories:
+  - AI
+  - LLM
+source: https://...
+---
+```
+
+**Pitfalls:**
+- Do NOT put metadata at the bottom of the file (Obsidian inline format like `status:: 📥`) — wiki-manager won't find it
+- Do NOT use `[[wikilinks]]` in frontmatter values — use plain strings in YAML lists
+- Do NOT use `#tags` in frontmatter — use plain strings in YAML lists
+- Concepts and names MUST be YAML lists (one per line with `- `), not comma-separated
+
 ## Notes on content quality
 
 - TL;DR should be 1-2 sentences max — if you can't summarize it that crisply, you haven't understood it yet
