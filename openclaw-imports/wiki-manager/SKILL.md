@@ -134,7 +134,7 @@ See `references/config.json` for vault paths. All paths are relative to `vault_r
 ## Pitfalls
 
 - **Frontmatter format:** Digest files MUST have YAML frontmatter with `---` delimiters at the TOP of the file. Obsidian inline properties at the bottom (`key:: value`) will NOT be parsed. The `concepts:` and `names:` fields must be YAML lists (`- item`), not `[[wikilink]]` format.
-- **Script path:** Always run from `~/.openclaw/skills/custom/wiki-manager/` — the hermes-imported copy at `~/.hermes/skills/openclaw-imports/wiki-manager/` fails with `ModuleNotFoundError: No module named 'logging_utils'`.
+- **Script path:** Run from `~/.hermes/skills/openclaw-imports/wiki-manager/` — `logging_utils.py` is bundled in `scripts/`. Falls back to `~/.openclaw` for `AGENT_DATA_DIR` if not set.
 - **`--extract-only` hangs:** If frontmatter concepts/names aren't found, the script falls back to LLM extraction (Gemini CLI) which can take 5-10 minutes and often times out. Fix the frontmatter first.
 - **Agent-primary workflow is more reliable than full ingest:** Use `--extract-only` to get metadata → check which pages exist → create/update pages via delegate_task or directly → run `index` to rebuild. This avoids the sequential Gemini CLI calls that cause SIGTERM/timeout issues.
 - **Timeout:** If using full ingest (not agent-primary), set `timeout=600+`. Multiple polls can interfere — use a single long wait.
@@ -149,7 +149,7 @@ Gemini CLI is only needed for the ingest fallback pipeline (`ingest` without `--
 
 ## Pitfalls
 
-- **Script path:** The copy at `~/.hermes/skills/openclaw-imports/wiki-manager/scripts/wiki_manager.py` has a missing `logging_utils` dependency. Use the openclaw version at `~/.openclaw/skills/custom/wiki-manager/scripts/wiki_manager.py` instead (it has the full dependency tree).
+- **Script path:** Run from `~/.hermes/skills/openclaw-imports/wiki-manager/` — all dependencies are bundled.
 - **Frontmatter format is critical:** Concepts and names MUST be in YAML frontmatter at the **top** of the digest file with `---` delimiters. If missing, the script falls back to LLM extraction via Gemini CLI which takes 5-10 min and often times out. Always verify frontmatter before running ingest.
 - **Frontmatter values must be plain strings:** Use `- Multi-Agent Systems` not `- [[Multi-Agent Systems]]`. Wikilink syntax in YAML values breaks parsing.
 - **Agent-primary workflow is more reliable:** Instead of letting `ingest` run end-to-end (which makes sequential Gemini calls), prefer: (1) `ingest <path> --extract-only` to get metadata, (2) create/update concept and name pages yourself or via subagent delegation, (3) run `index` to rebuild. This avoids timeouts and gives you control over page quality.
@@ -158,9 +158,9 @@ Gemini CLI is only needed for the ingest fallback pipeline (`ingest` without `--
 ## Pitfalls
 
 ### Script location
-The `wiki_manager.py` under `~/.hermes/skills/` fails with `ModuleNotFoundError: No module named 'logging_utils'`. **Always use the openclaw version:**
+Run wiki_manager.py from the hermes skills directory (logging_utils.py is bundled):
 ```bash
-cd ~/.openclaw/skills/custom/wiki-manager && python3 scripts/wiki_manager.py ...
+cd ~/.hermes/skills/openclaw-imports/wiki-manager && python3 scripts/wiki_manager.py ...
 ```
 
 ### `ingest --extract-only` hangs

@@ -30,8 +30,10 @@ def get_agent_data_dir() -> str:
     val = os.environ.get('AGENT_DATA_DIR')
     if val:
         return val
-    os.environ['AGENT_DATA_DIR'] = '/tmp'
-    return '/tmp'
+    fallback = os.path.expanduser('~/.openclaw')
+    os.environ['AGENT_DATA_DIR'] = fallback
+    logging.warning('AGENT_DATA_DIR is not set — falling back to %s. Set AGENT_DATA_DIR to control where skills write output.', fallback)
+    return fallback
 
 def _shared_setup_logger(name, log_file=None, console_level=logging.INFO, **kwargs):
     """Minimal logger setup."""
