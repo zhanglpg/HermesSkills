@@ -75,5 +75,6 @@ After copying, patch each script:
 
 1. **Empty decoy DBs** — The skill code directory may contain empty `.db` files (created by git or init). The real data DB lives elsewhere (e.g. `~/.openclaw/<name>/`). Always check file size and table contents.
 2. **Shared utility imports** — Will break at runtime if not inlined. `grep` for them before considering the import done.
-3. **Config path drift** — Openclaw `config.json` uses `$AGENT_DATA_DIR` variable expansion. Hermes doesn't set this env var by default — use concrete paths or inline the fallback logic.
+3. **Config path drift** — Openclaw `config.json` uses `$AGENT_DATA_DIR` variable expansion. Hermes doesn't set this env var by default. Fix: change the `get_agent_data_dir()` fallback from `/tmp` to `os.path.expanduser('~/.openclaw')` so scripts find existing data. Also copy `config.json` to the skill root if the script uses `_SKILL_DIR / "config.json"` (Hermes imports put it under `references/`).
+   4. **Missing shared dependencies** — Openclaw skills import from `shared/logging_utils.py`. Bundle a copy of `logging_utils.py` directly into the skill's `scripts/` directory so it works standalone.
 4. **launchctl references** — Some scripts (openbb-sync) use macOS-specific `launchctl`. Note these for cross-platform awareness.

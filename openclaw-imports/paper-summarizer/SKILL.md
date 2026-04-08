@@ -25,77 +25,11 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
    - Sanitize the title for use as a filename (remove special chars, keep it readable)
    - If the note already exists, ask before overwriting
 
-## ⚠️ Frontmatter Format (Critical for Wiki Ingest)
-
-The digest MUST have proper YAML frontmatter at the TOP of the file (not the bottom) with `---` delimiters. Concepts and names MUST be YAML lists, NOT inline wikilinks.
-
-**Correct:**
-```yaml
----
-date: 2026-04-08
-status: 📥
-tags:
-  - AI
-  - LLM
-concepts:
-  - Multi-Agent Systems
-  - Prompt Optimization
-names:
-  - GEPA
-  - TextGrad
-source: https://arxiv.org/abs/XXXX.XXXXX
----
-```
-
-**Wrong (wiki-manager can't parse):**
-```
-concepts: [[Multi-Agent Systems]], [[Prompt Optimization]]
-names: [[GEPA]], [[TextGrad]]
-```
-
-The `concepts:` and `names:` fields drive wiki-manager ingest — without proper YAML lists, ingest falls back to slow LLM extraction and often times out.
-   - **IMPORTANT:** Frontmatter MUST use `---` YAML delimiters at the TOP of the file, not Obsidian inline properties at the bottom. `concepts:` and `names:` must be YAML lists (`- item`), not `[[wikilink]]` format. The wiki-manager ingest pipeline depends on this exact format.
-
-## ⚠️ Frontmatter Format (CRITICAL for wiki-manager ingest)
-
-The note **MUST** have proper YAML frontmatter at the **TOP** of the file with `---` delimiters. The metadata block in the template (`date:`, `status::`, `tags:`, `concepts:`, `names:`) must be converted to YAML frontmatter format:
-
-```yaml
----
-date: 2026-04-08
-status: 📥
-tags:
-  - AI
-  - LLM
-concepts:
-  - Concept One
-  - Concept Two
-names:
-  - Name One
-  - Name Two
-categories:
-  - AI
-  - LLM
-source: https://arxiv.org/abs/XXXX.XXXXX
----
-```
-
-**Rules:**
-- Do NOT use Obsidian inline format (`status::`, `categories::`) — use plain YAML
-- Do NOT use `[[wikilinks]]` in frontmatter values — use plain strings (wikilinks go in the body)
-- `concepts` and `names` MUST be YAML lists (one item per line with `- `), not comma-separated or wikilink format
-- Do NOT duplicate metadata at the bottom of the file — frontmatter only
-
 4. **Confirm** — tell the user the note was saved and give a one-line headline of the paper's key contribution
 
-## Obsidian linking & tags
+5. **After digest:** Run wiki-manager ingest (see wiki-manager skill) to extract concepts/names into the wiki.
 
-- **Wikilinks:** Always add `[[Note Name]]` links when referencing concepts, papers, or notes that exist in the vault. Use exact filenames where possible (check `notes/` folder). When uncertain, use the title as-is — Obsidian will resolve it.
-- **Connections section:** Every note should have a "Connections" section that explicitly links to related vault notes
-- **Tags:** Use both inline `#tags` in frontmatter AND `[[Category]]` wikilinks for categories
-- **Cross-link into existing notes:** If a paper directly extends or contradicts an existing vault note, mention it in the Connections section
-
-## Frontmatter Requirements (CRITICAL for wiki-manager ingest)
+## ⚠️ Frontmatter Format (CRITICAL for wiki-manager ingest)
 
 The digest MUST have proper YAML frontmatter **at the top** of the file with `---` delimiters. The wiki-manager parses this to find concepts and names — without it, ingest falls back to slow LLM extraction that often times out.
 
@@ -124,6 +58,13 @@ source: https://...
 - Do NOT use `[[wikilinks]]` in frontmatter values — use plain strings in YAML lists
 - Do NOT use `#tags` in frontmatter — use plain strings in YAML lists
 - Concepts and names MUST be YAML lists (one per line with `- `), not comma-separated
+
+## Obsidian linking & tags
+
+- **Wikilinks:** Always add `[[Note Name]]` links when referencing concepts, papers, or notes that exist in the vault. Use exact filenames where possible (check `notes/` folder). When uncertain, use the title as-is — Obsidian will resolve it.
+- **Connections section:** Every note should have a "Connections" section that explicitly links to related vault notes
+- **Tags:** Use both inline `#tags` in frontmatter AND `[[Category]]` wikilinks for categories
+- **Cross-link into existing notes:** If a paper directly extends or contradicts an existing vault note, mention it in the Connections section
 
 ## Notes on content quality
 
