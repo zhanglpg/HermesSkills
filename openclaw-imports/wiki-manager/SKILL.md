@@ -145,6 +145,39 @@ gen-notes/
   comparisons/      — side-by-side comparisons
 ```
 
+## Backfilling Domains on Existing Pages
+
+When adding `domain:` to pages that predate domain support, use `execute_code` with **native Python file I/O** (not `hermes_tools` wrappers) to avoid the 50 tool-call limit:
+
+```python
+import os, re
+digests_dir = os.path.expanduser("~/path/to/gen-notes/digests")
+# Map non-default domains explicitly; everything else defaults to "ai"
+domain_map = {
+    "Some Science Paper.md": "science",
+    "Some Systems Paper.md": "systems",
+}
+for filename in os.listdir(digests_dir):
+    if not filename.endswith(".md"): continue
+    filepath = os.path.join(digests_dir, filename)
+    domain = domain_map.get(filename, "ai")
+    with open(filepath, 'r') as f: raw = f.read()
+    fm_match = re.match(r'^---\s*\n(.*?)\n---', raw, re.DOTALL)
+    if not fm_match or re.search(r'^domain:', fm_match.group(1), re.MULTILINE):
+        continue  # skip if no frontmatter or domain already set
+    # Insert before tags:/categories:/concepts: line
+    fm = fm_match.group(1)
+    for marker in ["\ntags:", "\ncategories:", "\nconcepts:"]:
+        if marker in fm:
+            raw = raw.replace(marker, f"\ndomain: {domain}{marker}", 1)
+            break
+    with open(filepath, 'w') as f: f.write(raw)
+```
+
+After backfill, run `python3 scripts/wiki_manager.py index` to rebuild the index with domain sections.
+
+**Key lesson:** `hermes_tools.read_file`/`patch` each count as tool calls — processing 50+ files exhausts the 50-call budget. Native `open()`/`re.sub()` uses zero tool calls.
+
 ## Configuration
 
 See `references/config.json` for vault paths. All paths are relative to `vault_root`.
