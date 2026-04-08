@@ -1,6 +1,6 @@
 ---
 name: wiki-manager
-description: "Maintains a living knowledge wiki in the Obsidian vault. After any paper is digested, extracts concepts and names, creates/updates concept and name pages, rebuilds the index, and appends to the log. Also supports periodic lint checks, LLM-powered compile analysis, index rebuilding, and broken wikilink repair. Use for wiki updates, ingestion, lint checks, compile analysis, or knowledge graph maintenance."
+description: "Maintains a living knowledge wiki in the Obsidian vault. After any paper is digested, extracts concepts and names, creates/updates concept and name pages, rebuilds the index, and appends to the log. Supports domain-based organization (ai, systems, history, science, wisdom) with domain-filtered index views. Also supports periodic lint checks, LLM-powered compile analysis, index rebuilding, and broken wikilink repair. Use for wiki updates, ingestion, lint checks, compile analysis, or knowledge graph maintenance."
 ---
 
 # Wiki Manager
@@ -114,11 +114,29 @@ python3 scripts/wiki_manager.py fix-links scan
 python3 scripts/wiki_manager.py fix-links apply '{"Transformer Architecture": "Transformer"}'
 ```
 
+## Domain Support
+
+Every page has a `domain` frontmatter field. Valid domains:
+
+| Domain | Scope |
+|--------|-------|
+| `ai` | AI & Machine Learning |
+| `systems` | Computing Systems & Infrastructure |
+| `history` | History & Civilization |
+| `science` | Physics, Mathematics & Complexity |
+| `wisdom` | Philosophy, Leadership & Classical Thought |
+
+- Digests: set `domain:` in frontmatter before ingesting. Defaults to `ai` if missing.
+- Concepts/Names: inherit domain from the digest during ingest.
+- Index: auto-generates a "By Domain" section with emoji-labeled subsections and domain counts in Stats.
+- Config: `valid_domains` and `default_domain` in `references/config.json`.
+- Cross-domain connections are expressed through wikilinks, not multiple domains per page.
+
 ## Vault Structure
 
 ```
 gen-notes/
-  index.md          — auto-generated catalog of all pages
+  index.md          — auto-generated catalog of all pages (includes By Domain section)
   log.md            — append-only chronological record
   digests/          — paper digest notes
   concepts/         — concept pages
@@ -126,6 +144,34 @@ gen-notes/
   syntheses/        — filed query answers
   comparisons/      — side-by-side comparisons
 ```
+
+## Domains (Topic Tags)
+
+Digests should include a `domain:` field in YAML frontmatter to enable filtered views without breaking the cross-linked knowledge graph. The five canonical domains are:
+
+| Domain | Scope |
+|--------|-------|
+| `ai` | AI, ML, deep learning, LLMs, agents, code generation, RLHF, scaling laws, dev-infra strategy |
+| `systems` | Computer architecture, GPU, CUDA, data center networking, RDMA, distributed systems, infrastructure |
+| `history` | Chinese history, world history, historiography methodology |
+| `science` | Physics, mathematics, complexity theory, information theory, philosophy of science, biology |
+| `wisdom` | Philosophy, leadership, classical thought (Chinese & Western), management, engineering culture, self-development |
+
+Cross-domain pages are expected and valuable — e.g. Kolmogorov complexity spans `ai` + `science`, Dijkstra spans `systems` + `wisdom`.
+
+Frontmatter example:
+```yaml
+---
+domain: science
+concepts:
+  - Kolmogorov Complexity
+  - Algorithmic Randomness
+names:
+  - Andrei Kolmogorov
+---
+```
+
+**Note:** Domain support in the ingest pipeline and index generation is planned but not yet implemented. For now, add `domain:` manually to new digests.
 
 ## Configuration
 

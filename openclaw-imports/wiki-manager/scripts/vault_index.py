@@ -17,6 +17,7 @@ class PageInfo:
     path: Path
     title: str = ""
     page_type: str = "unknown"  # digest, concept, synthesis
+    domain: str = ""  # ai, systems, history, science, wisdom
     tags: list[str] = field(default_factory=list)
     date_created: Optional[str] = None
     date_updated: Optional[str] = None
@@ -192,10 +193,16 @@ def scan_vault(vault_root: str, gen_notes_dir: str = "gen-notes") -> list[PageIn
         if isinstance(source_digests, str):
             source_digests = [source_digests]
 
+        domain = fm.get("domain", "")
+        if isinstance(domain, list):
+            domain = domain[0] if domain else ""
+        domain = str(domain).strip().lower()
+
         page = PageInfo(
             path=md_file.relative_to(root),
             title=str(title),
             page_type=_infer_page_type(md_file, fm),
+            domain=domain,
             tags=[str(t).lstrip("#") for t in tags],
             date_created=str(fm.get("date-created", fm.get("date", fm.get("digested", "")))),
             date_updated=str(fm.get("date-updated", fm.get("date", ""))),
@@ -279,8 +286,54 @@ def build_index(pages: list[PageInfo]) -> str:
             lines.append(f"- {p.wikilink}")
         lines.append("")
 
-    # --- By Topic ---
+    # --- By Domain ---
     all_pages = digests + concepts + names + syntheses + other
+    _DOMAIN_LABELS = {
+        "ai": "🤖 AI & Machine Learning",
+        "systems": "⚙️ Computing Systems & Infrastructure",
+        "history": "📜 History & Civilization",
+        "science": "🔬 Physics, Mathematics & Complexity",
+        "wisdom": "🧘 Philosophy, Leadership & Classical Thought",
+    }
+    domain_map: dict[str, list[PageInfo]] = {}
+    untagged_domain: list[PageInfo] = []
+    for p in all_pages:
+        if p.domain:
+            domain_map.setdefault(p.domain, []).append(p)
+        else:
+            untagged_domain.append(p)
+
+    if domain_map or untagged_domain:
+        lines.append("## By Domain")
+        lines.append("")
+        for domain_key in ["ai", "systems", "history", "science", "wisdom"]:
+            domain_pages = domain_map.get(domain_key, [])
+            if not domain_pages:
+                continue
+            label = _DOMAIN_LABELS.get(domain_key, domain_key)
+            lines.append(f"### {label}")
+            lines.append("")
+            for p in sorted(domain_pages, key=lambda p: p.title.lower()):
+                lines.append(f"- {p.wikilink} ({p.page_type})")
+            lines.append("")
+        # Any domains not in the predefined list
+        for domain_key in sorted(domain_map.keys()):
+            if domain_key in _DOMAIN_LABELS:
+                continue
+            domain_pages = domain_map[domain_key]
+            lines.append(f"### {domain_key}")
+            lines.append("")
+            for p in sorted(domain_pages, key=lambda p: p.title.lower()):
+                lines.append(f"- {p.wikilink} ({p.page_type})")
+            lines.append("")
+        if untagged_domain:
+            lines.append("### ❓ No Domain Assigned")
+            lines.append("")
+            for p in sorted(untagged_domain, key=lambda p: p.title.lower()):
+                lines.append(f"- {p.wikilink} ({p.page_type})")
+            lines.append("")
+
+    # --- By Topic ---
     tag_map: dict[str, list[PageInfo]] = {}
     for p in all_pages:
         for tag in p.tags:
@@ -308,6 +361,17 @@ def build_index(pages: list[PageInfo]) -> str:
     lines.append(f"| Syntheses | {len(syntheses)} |")
     lines.append(f"| **Total** | **{len(all_pages)}** |")
     lines.append("")
+
+    # Domain breakdown
+    if domain_map:
+        lines.append("| Domain | Count |")
+        lines.append("|--------|-------|")
+        for dk in ["ai", "systems", "history", "science", "wisdom"]:
+            if dk in domain_map:
+                lines.append(f"| {_DOMAIN_LABELS.get(dk, dk)} | {len(domain_map[dk])} |")
+        if untagged_domain:
+            lines.append(f"| ❓ Unassigned | {len(untagged_domain)} |")
+        lines.append("")
 
     return "\n".join(lines)
 

@@ -11,5 +11,7 @@
   "names_dir": "gen-notes/names",
   "max_concepts_per_ingest": 3,
   "max_names_per_ingest": 5,
+  "valid_domains": ["ai", "systems", "history", "science", "wisdom"],
+  "default_domain": "ai",
   "log_file": "$AGENT_DATA_DIR/logs/skills/wiki-manager/wiki.log"
 }

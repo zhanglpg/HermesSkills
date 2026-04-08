@@ -17,6 +17,7 @@ Generate a complete concept page in Obsidian-compatible markdown. The page MUST 
 ---
 title: "{concept_name}"
 type: concept
+domain: {domain}
 aliases:
   - "Alias One"
   - "Abbreviation"
@@ -30,6 +31,7 @@ status: 🔗
 ---
 
 **Frontmatter rules:**
+- **domain**: Use exactly `{domain}` — one of: `ai`, `systems`, `history`, `science`, `wisdom`
 - **aliases**: Include common alternate names, abbreviations, and full expansions (e.g., for "RLHF" include "Reinforcement Learning from Human Feedback")
 - **source-digests**: Wikilinks to the paper digest(s) that informed this page
 - **tags**: Lowercase, hyphenated keywords from this taxonomy: `AI`, `LLM`, `transformer`, `attention`, `scaling`, `training`, `inference`, `data`, `systems`, `NLP`, `vision`, `multimodal`, `agents`, `reasoning`

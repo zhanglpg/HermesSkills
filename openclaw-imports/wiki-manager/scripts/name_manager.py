@@ -116,6 +116,7 @@ def create_name_page(
     names_dir: str | Path,
     llm_fn: LLMFunction,
     existing_page_names: Optional[dict[str, list[str]]] = None,
+    domain: str = "",
 ) -> Path:
     """Create a new name page using an LLM.
 
@@ -126,6 +127,7 @@ def create_name_page(
         llm_fn: Callable that takes a prompt and returns LLM output.
         existing_page_names: Dict with keys 'concepts', 'names', 'digests',
             each a list of existing page titles for wikilink context.
+        domain: Knowledge domain (ai, systems, history, science, wisdom).
 
     Returns:
         Path to the created name page.
@@ -139,6 +141,7 @@ def create_name_page(
     prompt = template.replace("{name}", name)
     prompt = prompt.replace("{digest_content}", digest_content)
     prompt = prompt.replace("{today}", today)
+    prompt = prompt.replace("{domain}", domain or "ai")
 
     pages_ctx = _format_existing_pages(existing_page_names)
     for key, value in pages_ctx.items():
@@ -152,6 +155,7 @@ def create_name_page(
             f"---\n"
             f'title: "{name}"\n'
             f"type: name\n"
+            f"domain: {domain or 'ai'}\n"
             f"name-type: unknown\n"
             f"aliases:\n"
             f'  - "{name}"\n'

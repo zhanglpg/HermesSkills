@@ -124,7 +124,19 @@ def cmd_ingest(args, config: dict, logger) -> None:
         digest_title = digest_title[0]
     digest_title = str(digest_title)
 
-    logger.info(f"Ingesting: {digest_title}")
+    # 1.5 Get domain from frontmatter
+    valid_domains = config.get("valid_domains", ["ai", "systems", "history", "science", "wisdom"])
+    default_domain = config.get("default_domain", "ai")
+    digest_domain = fm.get("domain", "")
+    if isinstance(digest_domain, list):
+        digest_domain = digest_domain[0] if digest_domain else ""
+    digest_domain = str(digest_domain).strip().lower()
+    if digest_domain not in valid_domains:
+        if digest_domain:
+            logger.warning(f"Unknown domain '{digest_domain}' — falling back to '{default_domain}'")
+        digest_domain = default_domain
+
+    logger.info(f"Ingesting: {digest_title} (domain: {digest_domain})")
 
     # 2. Get concepts — prefer frontmatter
     llm_fn = _make_llm_fn(config, logger)
@@ -192,6 +204,7 @@ def cmd_ingest(args, config: dict, logger) -> None:
         extract_data = {
             "digest_path": str(digest_path),
             "digest_title": digest_title,
+            "digest_domain": digest_domain,
             "digest_content": digest_content,
             "concepts": concepts_info,
             "names": names_info,
@@ -201,6 +214,7 @@ def cmd_ingest(args, config: dict, logger) -> None:
             "names_dir": str(names_dir),
             "gen_notes_dir": gen_notes_dir,
             "log_path": str(log_path),
+            "valid_domains": valid_domains,
         }
         print(json.dumps(extract_data, ensure_ascii=False))
         return
@@ -215,7 +229,7 @@ def cmd_ingest(args, config: dict, logger) -> None:
             touched_pages.append(f"Updated concept: [[{concept_name}]]")
         else:
             logger.info(f"  Creating concept: {concept_name}")
-            create_concept_page(concept_name, digest_content, concept_dir, llm_fn, existing_page_names)
+            create_concept_page(concept_name, digest_content, concept_dir, llm_fn, existing_page_names, domain=digest_domain)
             touched_pages.append(f"Created concept: [[{concept_name}]]")
 
     # 5. Create or update name pages
@@ -227,7 +241,7 @@ def cmd_ingest(args, config: dict, logger) -> None:
             touched_pages.append(f"Updated name: [[{name}]]")
         else:
             logger.info(f"  Creating name: {name}")
-            create_name_page(name, digest_content, names_dir, llm_fn, existing_page_names)
+            create_name_page(name, digest_content, names_dir, llm_fn, existing_page_names, domain=digest_domain)
             touched_pages.append(f"Created name: [[{name}]]")
 
     # 7. Update index

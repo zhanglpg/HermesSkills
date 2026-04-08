@@ -17,6 +17,7 @@ Generate a complete name page in Obsidian-compatible markdown. The page MUST beg
 ---
 title: "{name}"
 type: name
+domain: {domain}
 name-type: person | dataset | model | place | paper
 aliases:
   - "Alias One"
@@ -31,6 +32,7 @@ status: 🔗
 ---
 
 **Frontmatter rules:**
+- **domain**: Use exactly `{domain}` — one of: `ai`, `systems`, `history`, `science`, `wisdom`
 - **name-type**: One of `person`, `dataset`, `model`, `place`, or `paper` — choose the best fit
 - **aliases**: Include common alternate names, abbreviations, and full expansions (e.g., for "GPT-4" include "Generative Pre-trained Transformer 4"; for a person include name variations)
 - **source-digests**: Wikilinks to the paper digest(s) that informed this page

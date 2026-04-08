@@ -173,6 +173,7 @@ def create_concept_page(
     concept_dir: str | Path,
     llm_fn: LLMFunction,
     existing_page_names: Optional[dict[str, list[str]]] = None,
+    domain: str = "",
 ) -> Path:
     """Create a new concept page using an LLM.
 
@@ -183,6 +184,7 @@ def create_concept_page(
         llm_fn: Callable that takes a prompt and returns LLM output.
         existing_page_names: Dict with keys 'concepts', 'names', 'digests',
             each a list of existing page titles for wikilink context.
+        domain: Knowledge domain (ai, systems, history, science, wisdom).
 
     Returns:
         Path to the created concept page.
@@ -196,6 +198,7 @@ def create_concept_page(
     prompt = template.replace("{concept_name}", concept_name)
     prompt = prompt.replace("{digest_content}", digest_content)
     prompt = prompt.replace("{today}", today)
+    prompt = prompt.replace("{domain}", domain or "ai")
 
     pages_ctx = _format_existing_pages(existing_page_names)
     for key, value in pages_ctx.items():
@@ -209,6 +212,7 @@ def create_concept_page(
             f"---\n"
             f'title: "{concept_name}"\n'
             f"type: concept\n"
+            f"domain: {domain or 'ai'}\n"
             f"aliases:\n"
             f'  - "{concept_name}"\n'
             f"date-created: {today}\n"
