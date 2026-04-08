@@ -1,0 +1,55 @@
+{
+  "_comment": "AI Tech Brief Configuration. Source list for the briefs skill.",
+
+  "arxiv_categories": ["cs.LG", "cs.AI", "cs.SE"],
+
+  "twitter_accounts": [
+    "karpathy", "ilyasut", "AndrewYNg", "lilianweng",
+    "DrJimFan", "jeremyphoward", "natolambert", "philduanai",
+    "hwchase17", "rauchg", "levelsio", "swyx"
+  ],
+
+  "rss_sources": [
+    {"name": "Import AI",    "rss": "https://jack-clark.net/feed/",              "category": "newsletter"},
+    {"name": "TLDR AI",      "rss": "https://tldr.tech/rss",                     "category": "newsletter"},
+    {"name": "Latent Space", "rss": "https://latentspace.blog/rss",              "category": "newsletter"},
+    {"name": "Ben's Bites",  "rss": "https://bensbites.beehiiv.com/rss",         "category": "newsletter"},
+    {"name": "The Neuron",   "rss": "https://theneuron.beehiiv.com/rss",         "category": "newsletter"},
+    {"name": "Interconnects","rss": "https://interconnects.ai/rss",              "category": "newsletter"},
+    {"name": "Anthropic",    "rss": "https://www.anthropic.com/news?format=rss", "category": "ai_lab"},
+    {"name": "OpenAI",       "rss": "https://openai.com/news/rss",               "category": "ai_lab"},
+    {"name": "Hugging Face",          "rss": "https://huggingface.co/blog/feed.xml",            "category": "research_org"},
+    {"name": "Simon Willison's Weblog","rss": "https://simonwillison.net/atom/everything/",      "category": "newsletter"}
+  ],
+
+  "web_only_sources": [
+    {"name": "The Batch",                  "url": "https://www.deeplearning.ai/the-batch",            "category": "newsletter"},
+    {"name": "The Rundown AI",             "url": "https://therundown.ai",                            "category": "newsletter"},
+    {"name": "Superhuman AI",              "url": "https://superhuman.ai",                            "category": "newsletter"},
+    {"name": "One Useful Thing",           "url": "https://www.oneusefulthing.org",                   "category": "newsletter"},
+    {"name": "Unsupervised Learning",      "url": "https://danielmiessler.com/newsletter",            "category": "newsletter"},
+    {"name": "Stratechery",               "url": "https://stratechery.com",                          "category": "newsletter"},
+    {"name": "Google DeepMind",            "url": "https://deepmind.google/discover/blog",            "category": "ai_lab"},
+    {"name": "Meta AI",                    "url": "https://ai.meta.com/blog",                         "category": "ai_lab"},
+    {"name": "LMSYS",                      "url": "https://lmsys.org/blog",                           "category": "research_org"},
+    {"name": "Matthew Berman",             "url": "https://www.youtube.com/@matthew_berman",          "category": "youtube"},
+    {"name": "Two Minute Papers",          "url": "https://www.youtube.com/@TwoMinutePapers",         "category": "youtube"},
+    {"name": "Yannic Kilcher",             "url": "https://www.youtube.com/@YannicKilcher",           "category": "youtube"},
+    {"name": "3Blue1Brown",                "url": "https://www.youtube.com/@3blue1brown",             "category": "youtube"},
+    {"name": "Fireship",                   "url": "https://www.youtube.com/@Fireship",                "category": "youtube"},
+    {"name": "AI Explained",               "url": "https://www.youtube.com/@aiexplained-official",    "category": "youtube"},
+    {"name": "No Priors",                  "url": "https://www.nopriorsshow.com",                     "category": "podcast"},
+    {"name": "The TWIML AI Podcast",       "url": "https://twimlai.com/podcast/twimlai",              "category": "podcast"},
+    {"name": "Machine Learning Street Talk","url": "https://www.youtube.com/@MachineLearningStreetTalk","category": "podcast"},
+    {"name": "Lex Fridman Podcast",        "url": "https://lexfridman.com/podcast",                   "category": "podcast"},
+    {"name": "Gradient Dissent",           "url": "https://wandb.ai/fully-connected/gradient-dissent","category": "podcast"},
+    {"name": "Cognitive Revolution",       "url": "https://www.cognitiverevolution.ai",               "category": "podcast"},
+    {"name": "Dwarkesh Podcast",           "url": "https://www.dwarkeshpatel.com/podcast",            "category": "podcast"},
+    {"name": "Training Data",              "url": "https://www.bowerycap.com/blog/training-data",     "category": "podcast"},
+    {"name": "The Robot Brains",           "url": "https://www.therobotbrains.ai",                    "category": "podcast"},
+    {"name": "Hacker News",               "url": "https://news.ycombinator.com",                     "category": "community"},
+    {"name": "GitHub Trending (AI/ML)",    "url": "https://github.com/trending",                      "category": "community"}
+  ],
+
+  "brief_title": "Daily AI Tech Brief"
+}

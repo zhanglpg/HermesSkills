@@ -1,0 +1,11 @@
+{
+  "scoring_weights": {
+    "citations": 0.30,
+    "recency": 0.30,
+    "queue_affinity": 0.40
+  },
+  "db_path": "~/.hermes/skills/openclaw-imports/paper-queue/queue.db",
+  "digest_output_dir": "$AGENT_DATA_DIR/paper-digests",
+  "max_suggestions": 10,
+  "log_file": "/tmp/logs/skills/paper-queue/queue.log"
+}

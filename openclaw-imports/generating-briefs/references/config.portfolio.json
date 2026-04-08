@@ -1,0 +1,59 @@
+{
+  "_comment": "Portfolio Brief Configuration. Source list and holdings for the briefs skill.",
+
+  "arxiv_categories": [],
+
+  "twitter_accounts": [
+    "unusual_whales", "zaborsky", "DeItaone", "Fxhedgers",
+    "markets", "lisaabramowicz1", "elerianm",
+    "TruthGundlach", "biaborern", "dampedspring"
+  ],
+
+  "rss_sources": [
+    {"name": "Reuters Business",       "rss": "https://www.rssboard.org/rss-redirect/rss/reuters/businessNews", "category": "news"},
+    {"name": "CNBC Top News",          "rss": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114", "category": "news"},
+    {"name": "MarketWatch",            "rss": "http://feeds.marketwatch.com/marketwatch/topstories/",       "category": "news"},
+    {"name": "Yahoo Finance",          "rss": "https://finance.yahoo.com/news/rssindex",                    "category": "news"},
+    {"name": "Seeking Alpha Market News","rss": "https://seekingalpha.com/market_currents.xml",             "category": "analysis"},
+    {"name": "Calculated Risk",        "rss": "https://www.calculatedriskblog.com/feeds/posts/default",     "category": "analysis"},
+    {"name": "Abnormal Returns",       "rss": "https://abnormalreturns.com/feed/",                          "category": "analysis"},
+    {"name": "The Reformed Broker",    "rss": "https://thereformedbroker.com/feed/",                        "category": "analysis"},
+    {"name": "Marginal Revolution",    "rss": "https://marginalrevolution.com/feed",                        "category": "macro"},
+    {"name": "FT Alphaville",          "rss": "https://www.ft.com/alphaville?format=rss",                   "category": "analysis"}
+  ],
+
+  "web_only_sources": [
+    {"name": "Bloomberg Markets",           "url": "https://www.bloomberg.com/markets",                "category": "news"},
+    {"name": "Financial Times",             "url": "https://www.ft.com",                               "category": "news"},
+    {"name": "WSJ Markets",                 "url": "https://www.wsj.com/news/markets",                 "category": "news"},
+    {"name": "Matt Levine (Money Stuff)",   "url": "https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine", "category": "newsletter"},
+    {"name": "The Daily Shot",              "url": "https://dailyshotbrief.com",                       "category": "newsletter"},
+    {"name": "Kyla Scanlon",                "url": "https://kylascanlon.com",                          "category": "newsletter"},
+    {"name": "Odd Lots (Bloomberg)",        "url": "https://www.bloomberg.com/oddlots-podcast",        "category": "podcast"},
+    {"name": "Macro Voices",                "url": "https://www.macrovoices.com",                      "category": "podcast"},
+    {"name": "The All-In Podcast",          "url": "https://www.allinpodcast.co",                      "category": "podcast"},
+    {"name": "Fed Reserve Press Releases",  "url": "https://www.federalreserve.gov/newsevents/pressreleases.htm", "category": "central_bank"},
+    {"name": "ECB Press Releases",          "url": "https://www.ecb.europa.eu/press/pr/html/index.en.html",       "category": "central_bank"},
+    {"name": "CME FedWatch",                "url": "https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html", "category": "data"},
+    {"name": "FRED Economic Data",          "url": "https://fred.stlouisfed.org",                      "category": "data"},
+    {"name": "Finviz Map",                  "url": "https://finviz.com/map.ashx",                      "category": "data"},
+    {"name": "Earnings Whispers",           "url": "https://www.earningswhispers.com/calendar",        "category": "earnings"}
+  ],
+
+  "brief_title": "Daily Portfolio Brief",
+
+  "extra_data_path": "~/.openbb_platform/data/brief_data.json",
+
+  "portfolio_holdings": {
+    "Tech": ["GOOGL", "NVDA"],
+    "Semiconductors": ["NVDA", "TSMC"],
+    "China Internet": ["BABA"],
+    "US Broad Market": ["SPY"],
+    "China Indices": ["FXI", "KWEB"]
+  },
+
+  "watchlist": {
+    "tickers": ["AAPL", "MSFT", "META", "AMZN", "TSLA", "AMD", "AVGO"],
+    "themes": ["AI infrastructure spending", "Fed rate cuts", "China stimulus", "semiconductor supply chain", "US-China tech relations"]
+  }
+}
