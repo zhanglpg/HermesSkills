@@ -24,6 +24,36 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
    - Default path: `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes/gen-notes/digests/<Title>.md`
    - Sanitize the title for use as a filename (remove special chars, keep it readable)
    - If the note already exists, ask before overwriting
+
+## ⚠️ Frontmatter Format (Critical for Wiki Ingest)
+
+The digest MUST have proper YAML frontmatter at the TOP of the file (not the bottom) with `---` delimiters. Concepts and names MUST be YAML lists, NOT inline wikilinks.
+
+**Correct:**
+```yaml
+---
+date: 2026-04-08
+status: 📥
+tags:
+  - AI
+  - LLM
+concepts:
+  - Multi-Agent Systems
+  - Prompt Optimization
+names:
+  - GEPA
+  - TextGrad
+source: https://arxiv.org/abs/XXXX.XXXXX
+---
+```
+
+**Wrong (wiki-manager can't parse):**
+```
+concepts: [[Multi-Agent Systems]], [[Prompt Optimization]]
+names: [[GEPA]], [[TextGrad]]
+```
+
+The `concepts:` and `names:` fields drive wiki-manager ingest — without proper YAML lists, ingest falls back to slow LLM extraction and often times out.
    - **IMPORTANT:** Frontmatter MUST use `---` YAML delimiters at the TOP of the file, not Obsidian inline properties at the bottom. `concepts:` and `names:` must be YAML lists (`- item`), not `[[wikilink]]` format. The wiki-manager ingest pipeline depends on this exact format.
 
 ## ⚠️ Frontmatter Format (CRITICAL for wiki-manager ingest)

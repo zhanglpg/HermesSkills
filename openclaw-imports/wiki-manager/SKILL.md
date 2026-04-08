@@ -18,9 +18,11 @@ Maintain a living knowledge wiki in the Obsidian vault. This skill transforms is
 
 ---
 
-## Ingest (Agent-Primary)
+## Ingest (Agent-Primary) — PREFERRED METHOD
 
 After a paper digest is created, ingest it into the wiki to extract concepts and names and create their pages.
+
+**⚠️ The script-based `ingest` command frequently times out** (it makes sequential Gemini CLI calls, ~2 min per concept/name). The agent-primary workflow below is more reliable — use `--extract-only` to validate frontmatter parsing, then create/update pages yourself and run `index` at the end.
 
 ### Step 1: Extract metadata
 
