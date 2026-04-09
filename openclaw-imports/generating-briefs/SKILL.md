@@ -40,25 +40,45 @@ Parse the JSON output and use these exact prices and change percentages in the M
 
 ### Step 3: Gather Content
 
-Fetch content from ALL configured sources. Use your web tools freely — you are both the fetcher and summarizer. Gather as much relevant content as possible.
+Fetch content from ALL configured sources. **Use browser tools directly** — they are far more reliable than delegating to subagents for web fetching (subagents often lack web tools or hallucinate data).
+
+#### Pitfalls Learned
+- **DO NOT delegate web fetching to subagents** — they frequently lack web/browser tools or fabricate data (hallucinated repos, fake HN stories). Always fetch directly with browser_navigate + browser_console JS extraction.
+- **arXiv API (`export.arxiv.org`) is unreliable from sandboxed environments** — timeouts are common. Instead, navigate directly to `https://arxiv.org/list/cs.AI/new` (or cs.LG/new) via browser and extract papers with JS.
+- **RSS feeds are lower-value than direct site visits** — most newsletter RSS feeds (TLDR, Ben's Bites, etc.) often fail or return stale content. Prioritize direct browser visits to key blogs (Simon Willison, AI lab blogs).
+
+#### Hacker News (most reliable source)
+Navigate to `https://news.ycombinator.com/front?day=YYYY-MM-DD` (yesterday's date UTC) for scored/ranked stories. Use JS console extraction:
+```javascript
+const rows = document.querySelectorAll('.athing');
+// Extract title, url, score, comments, hnUrl from each row + its nextElementSibling .subtext
+```
+Filter results for AI/ML/LLM keywords. This gives accurate points and comment counts.
+
+#### arXiv Papers
+Navigate to `https://arxiv.org/list/{category}/new` via browser. Extract with JS:
+```javascript
+const dts = document.querySelectorAll('dt');
+const dds = document.querySelectorAll('dd');
+// Extract id, url, title, authors, abstract from dt/dd pairs
+```
+The page heading shows the listing date (e.g., "Wednesday, 8 April 2026"). Fetch cs.AI and cs.LG separately.
+
+#### GitHub Trending
+Navigate to `https://github.com/trending?since=daily`. Extract with JS:
+```javascript
+const articles = document.querySelectorAll('article.Box-row');
+// Extract name, url, description, language, stars, todayStars from each article
+```
 
 #### RSS Feeds
 For each source in `rss_sources`, fetch the RSS URL and extract recent article titles, URLs, dates, and summaries. If a feed fails, note it and move on.
-
-#### arXiv Papers
-If `arxiv_categories` is non-empty, search arXiv for recent papers in those categories.
-
-#### Hacker News
-Search for top AI-related stories on Hacker News.
-
-#### GitHub Trending
-Search for trending AI/ML repositories on GitHub from the past week.
 
 #### Twitter/X
 For each handle in `twitter_accounts`, search for their recent tweets (past 24-48 hours).
 
 #### Web-Only Sources
-For each source in `web_only_sources`, search the web for their latest content.
+For key blogs (Simon Willison, AI lab blogs), navigate directly to their homepage via browser and extract recent post titles/links. For others, search the web for their latest content.
 
 #### Extra Quantitative Data (Portfolio only)
 If `extra_data_path` is set and the file exists, read and incorporate it. Warn if the data is more than 2 days old.
