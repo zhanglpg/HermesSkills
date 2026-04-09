@@ -10,10 +10,25 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
 ## Workflow
 
 1. **Fetch the content**
-   - arXiv link: try fetching the HTML page first; if content is thin, fetch the `/pdf` URL using the `pdf` tool
+   - arXiv link: navigate to the HTML version (`arxiv.org/html/<id>`) via browser, then use `browser_console` with JS to bulk-extract all section text at once (see technique below). This is far more efficient than scrolling/snapshotting. If HTML is unavailable, fetch the `/pdf` URL using the `pdf` tool.
    - Blog post / web article: use `web_fetch`
    - PDF URL: use the `pdf` tool directly
    - Title only: search for it first with `web_search`, then fetch the best result
+
+   **arXiv HTML extraction technique (preferred):**
+   ```javascript
+   // Run via browser_console after navigating to arxiv.org/html/<id>
+   const sections = {};
+   document.querySelectorAll('h2, h3, h6').forEach(h => {
+     let text = '', el = h.nextElementSibling, count = 0;
+     while (el && !['H2','H3','H6'].includes(el.tagName) && count < 40) {
+       text += el.textContent + '\n'; el = el.nextElementSibling; count++;
+     }
+     sections[h.textContent.trim().substring(0, 80)] = text.substring(0, 3000);
+   });
+   JSON.stringify({ keys: Object.keys(sections), abstract: sections["Abstract"], ...});
+   ```
+   First call with just `keys` to see all sections, then a second call selecting the sections you need (intro, method, results, discussion, conclusion). Two JS calls typically captures an entire paper.
 
 2. **Generate the note** using the template in `references/note-template.md`
    - Be substantive — the reader reads deeply, so the summary should too
@@ -27,7 +42,10 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
 
 4. **Confirm** — tell the user the note was saved and give a one-line headline of the paper's key contribution
 
-5. **After digest:** Run wiki-manager ingest (see wiki-manager skill) to extract concepts/names into the wiki.
+5. **After digest — wiki integration:**
+   - **Minimum:** Run `python3 scripts/wiki_manager.py index` to rebuild the index so the new digest appears in the wiki index and domain sections.
+   - **Full ingest:** Run `wiki_manager.py ingest <path> --extract-only` then create/update concept and name pages (see wiki-manager skill). Only needed if you want concept/name pages updated — skip for quick digests.
+   - The index rebuild is fast (<5s) and always safe. Full ingest involves LLM calls and may timeout.
 
 ## ⚠️ Concept Limits
 
