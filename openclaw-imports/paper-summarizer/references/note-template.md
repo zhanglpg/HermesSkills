@@ -7,6 +7,7 @@ Use this template when generating a paper/article note.
 ```markdown
 ---
 date: <YYYY-MM-DD>
+domain: <ai|systems|history|science|wisdom>
 status: 📥
 tags:
   - <tag1>

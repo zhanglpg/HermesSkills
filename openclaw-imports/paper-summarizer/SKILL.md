@@ -40,6 +40,7 @@ The digest MUST have proper YAML frontmatter **at the top** of the file with `--
 ```yaml
 ---
 date: YYYY-MM-DD
+domain: ai
 status: 📥
 tags:
   - AI
@@ -56,6 +57,8 @@ categories:
 source: https://...
 ---
 ```
+
+**Domain field:** Required. One of: `ai`, `systems`, `history`, `science`, `wisdom`. See wiki-manager schema for assignment rules. When in doubt: "which section of a university library would this belong in?"
 
 **Pitfalls:**
 - Do NOT put metadata at the bottom of the file (Obsidian inline format like `status:: 📥`) — wiki-manager won't find it
