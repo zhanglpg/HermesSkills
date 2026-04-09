@@ -110,6 +110,23 @@ For papers with mathematical core, include 1-2 key equations (LaTeX, Obsidian-co
 - "What's novel" should be specific, not generic ("introduces a new method" is not useful)
 - Tags should reflect the vault's existing categories: `AI`, `LLM`, `systems`, `hardware`, `inference`, `scaling`, `training`, `data`, `management`, `leadership`, `engineering`, `physics`, `history`, `philosophy`, etc.
 
+## Parallel digest mode (via delegate_task)
+
+When digesting 2-3 papers at once (e.g., as preparation for expanding an essay), use `delegate_task` with batch mode. Each subagent gets:
+- The paper's source URL and any alternate sources (USENIX, ACM if arXiv fails)
+- The full note template and frontmatter format requirements
+- The exact output file path in the vault
+- Connections to link to (other papers in the same reading group)
+- A reminder about Mermaid diagrams and max 3 concepts
+
+After all subagents complete:
+1. Verify both digests exist and have proper frontmatter
+2. Update paper-queue status to `digested` for each paper
+3. Run `wiki_manager.py index` to rebuild the index
+4. Proceed with any downstream task (essay expansion, etc.)
+
+This pattern was validated for 2 parallel digests (Orca + PagedAttention) completing in ~160s total vs ~300s sequential.
+
 ## Reading backlog mode
 
 When asked to work through the reading backlog:

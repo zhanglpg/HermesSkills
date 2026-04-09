@@ -78,6 +78,19 @@ External APIs (no auth needed):
 
 See `references/config.json` for scoring weights and paths.
 
+## Pitfalls
+
+### arXiv ID resolution can return wrong papers
+The arXiv API sometimes resolves an ID to an unexpected paper (e.g., `2210.06413` should be Orca but resolves to EleutherAI; `2404.01869` should be Helix but resolves to a survey). **Always verify the resolved title** in the `add` output. If wrong:
+1. Mark the bad entry as `digested` to get it out of the active queue
+2. Re-add the correct paper via `add --manual --title "Correct Title" --url "https://correct-url"`
+
+### Batch additions
+When adding many papers at once (e.g., a recommended reading list), use `execute_code` with a loop over `subprocess.run()` calls. Check each result's stdout for the resolved title to catch mismatches early.
+
+### Conference papers not on arXiv
+Some important systems papers (Orca/OSDI, vLLM/SOSP) have arXiv preprints but the IDs may not match. For conference papers, prefer `--manual` with the USENIX/ACM URL rather than guessing arXiv IDs.
+
 ## Commands Reference
 
 | Command | Description |
