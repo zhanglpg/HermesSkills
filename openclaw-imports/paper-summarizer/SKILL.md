@@ -29,6 +29,10 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
 
 5. **After digest:** Run wiki-manager ingest (see wiki-manager skill) to extract concepts/names into the wiki.
 
+## ⚠️ Concept Limits
+
+**Max 3 concepts in frontmatter.** Concepts should be "worthy of a Wikipedia page, a survey paper, or mentioned in a book" — not paper-specific jargon or implementation details. If the paper introduces 10 terms, pick the 3 most fundamental. Same rule applies to `names:` — only include people who are notable beyond this one paper.
+
 ## ⚠️ Frontmatter Format (CRITICAL for wiki-manager ingest)
 
 The digest MUST have proper YAML frontmatter **at the top** of the file with `---` delimiters. The wiki-manager parses this to find concepts and names — without it, ingest falls back to slow LLM extraction that often times out.

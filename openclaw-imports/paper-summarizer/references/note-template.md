@@ -5,6 +5,23 @@ Use this template when generating a paper/article note.
 ---
 
 ```markdown
+---
+date: <YYYY-MM-DD>
+status: 📥
+tags:
+  - <tag1>
+  - <tag2>
+concepts:
+  - <Concept One>
+  - <Concept Two>
+names:
+  - <Author Name>
+categories:
+  - <category1>
+  - <category2>
+source: <URL>
+---
+
 # <Title>
 
 > <Authors> · <Venue/Journal/Blog> · <Date>
@@ -38,13 +55,6 @@ Use this template when generating a paper/article note.
 
 ## Liping's Likely Take
 <Based on Liping's interests and worldview — what would resonate, what would he push back on, what's the connection to his existing thinking?>
-
----
-date: <YYYY-MM-DD>
-status:: 📥
-tags: #<tag1> #<tag2>
-categories:: [[<tag1>]] - [[<tag2>]]
-source:: <URL>
 ```
 
 ---

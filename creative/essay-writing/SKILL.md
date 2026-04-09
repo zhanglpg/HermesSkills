@@ -12,6 +12,11 @@ Write essays through an iterative draft-review cycle using two models:
 ## Pitfalls
 
 - **Provider routing:** `hermes chat -m zai/glm-5.1` does NOT work — Hermes sends it to Anthropic. Must use `-m glm-5.1 --provider zai` (model and provider as separate flags).
+- **Always use direct invocation, not review.sh:** The review.sh script times out at 120s but the review process takes 2-3 minutes (Hermes startup + banner + tool discovery + skill loading + actual generation). Direct invocation with `timeout=180` is the only reliable approach:
+  ```bash
+  ESSAY="$(cat draft-N.md)" && hermes chat -m glm-5.1 --provider zai -q "...$ESSAY..." 2>/dev/null | sed -n '/^#/,$p'
+  ```
+  Filter banner with `2>/dev/null` on stderr + `sed -n '/^#/,$p'` on stdout to extract just the review.
 - **GLM-5.1 duplication:** GLM-5.1 sometimes outputs the full review twice in one response. The review script captures the raw output; when parsing, use only the first occurrence (split on the second `# Essay Review` header if present).
 - **Long essays:** The review script passes essay content inline via shell argument. For essays >15K chars, this may hit shell argument limits. In that case, use `hermes chat` with a tempfile-based approach or truncate to the most important sections.
 - **`-Q` flag:** The quiet flag (`-Q`) suppresses the banner but may cause exit code 1 on some setups. The review script omits it and filters the output. If banner noise appears in reviews, pipe through `sed -n '/^#/,$p'` to extract from the first markdown header onward.
@@ -88,14 +93,58 @@ PROMPT
 - If verdict is **RETHINK**: discuss fundamental issues with the user before continuing
 - After 3 rounds, present the best draft to the user regardless
 
+### Parallelization: Review + Diagrams
+
+After round 1, run subsequent reviews in the **background** to parallelize with other work:
+
+```bash
+# Run review in background with notification
+terminal(command="hermes chat -m glm-5.1 --provider zai -q '...' 2>/dev/null | sed -n '/^#/,$p'",
+         timeout=180, background=true, notify_on_complete=true)
+```
+
+While the review runs, create diagrams via `delegate_task` (up to 3 in parallel).
+
+**Use Mermaid diagrams, NOT Excalidraw.** Excalidraw produces separate `.excalidraw` files that don't render inline in Obsidian or GitHub Gist. Mermaid diagrams are self-contained code blocks in the markdown — they render natively in Obsidian, GitHub, and any Mermaid-aware viewer. This matters because essays are typically published to GitHub Gist or shared as markdown.
+
+Useful Mermaid diagram types for essays:
+- `graph LR` / `graph TD` — pipeline comparisons, architecture diagrams
+- `flowchart TD` — decision flowcharts with diamond decisions
+- `timeline` — chronological events
+- Use consistent color coding across diagrams (e.g., `style X fill:#a5d8ff` for one topic, `fill:#b2f2bb` for another)
+
+### Phase 2.5: Reference Material Integration (optional but high-impact)
+
+When the essay compares or analyzes papers, **read the paper digests and source notes** (e.g., from Obsidian gen-notes/digests/) for the referenced foundational works. Weave the intellectual lineage into the essay — explain how the papers build on each other, what each predecessor contributed, and how the lineage clarifies the current dispute or comparison.
+
+This is the single highest-impact improvement step. In practice it produced the biggest quality jump (7.8 → 8.0 PUBLISH) by:
+- Making the "why" behind technical choices clear (not just "what")
+- Grounding accusations (e.g., "loose analysis") in provable facts (e.g., Alon-Klartag optimality bound)
+- Giving the reader the conceptual toolkit to evaluate claims independently
+
+Add a Mermaid lineage flowchart showing the dependency graph between papers.
+
+### Focused Review Prompts for Later Rounds
+
+After round 1's full review, subsequent rounds can use shorter, targeted review prompts that focus on what changed. This is faster and produces more useful feedback:
+
+```
+"This is the third revision. Score each dimension 1-10 briefly, give overall
+score and verdict (PUBLISH >= 8, REVISE 5-7). Focus on whether the new
+Section N successfully [specific goal of the revision]."
+```
+
 ### Phase 3: Polish & Deliver
 
 1. Final proofread pass (grammar, flow, word choice)
 2. Save final version to `workspace/essays/<slug>/final.md`
-3. Present to the user with a summary of the review journey:
+3. If diagrams were created, save them in `workspace/essays/<slug>/diagrams/`
+4. Present to the user with a summary of the review journey:
    - How many rounds
    - Score progression (e.g., 5.8 → 7.2 → 8.4)
    - Key improvements made
+   - Diagram links (if created)
+5. If delivery to another platform is requested (Discord, Telegram, etc.), use a cron job with `deliver` target for the final report.
 
 ## File Structure
 
@@ -109,6 +158,7 @@ workspace/essays/<slug>/
   draft-N.md        — Nth draft
   review-N.md       — Nth review feedback
   final.md          — Polished final version
+  diagrams/         — Excalidraw diagrams (if created)
 ```
 
 ## Guidelines for the Writer
