@@ -91,6 +91,14 @@ source: https://...
 - **Tags:** Use both inline `#tags` in frontmatter AND `[[Category]]` wikilinks for categories
 - **Cross-link into existing notes:** If a paper directly extends or contradicts an existing vault note, mention it in the Connections section
 
+## Mermaid Diagrams
+
+Include 1-2 Mermaid diagrams in each digest to visually illustrate the paper's core architecture, data flow, or key mechanism. Place them after the "Method / How It Works" section. Use `graph TD`, `flowchart LR`, or `sequenceDiagram` as appropriate. Keep diagrams readable — max ~15 nodes. Obsidian renders Mermaid natively.
+
+## Key Equations
+
+For papers with mathematical core, include 1-2 key equations (LaTeX, Obsidian-compatible `$$...$$` blocks) that capture the essential formalism. Place after the Method section, near the diagrams. Skip for purely empirical/systems papers where there's no central equation.
+
 ## Notes on content quality
 
 - TL;DR should be 1-2 sentences max — if you can't summarize it that crisply, you haven't understood it yet
