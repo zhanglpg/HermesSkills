@@ -43,10 +43,11 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
 
 4. **Confirm** — tell the user the note was saved and give a one-line headline of the paper's key contribution
 
-5. **After digest — wiki integration:**
-   - **Minimum:** Run `python3 scripts/wiki_manager.py index` to rebuild the index so the new digest appears in the wiki index and domain sections.
-   - **Full ingest:** Run `wiki_manager.py ingest <path> --extract-only` then create/update concept and name pages (see wiki-manager skill). Only needed if you want concept/name pages updated — skip for quick digests.
-   - The index rebuild is fast (<5s) and always safe. Full ingest involves LLM calls and may timeout.
+5. **After digest — wiki integration (MANDATORY):**
+   - **ALWAYS run full wiki ingestion** after every digest. This is not optional. The user expects concept and name pages to be created/updated every time.
+   - **Workflow:** Run `wiki_manager.py ingest <path> --extract-only` to get concepts/names, then create/update concept and name pages (see wiki-manager skill), then run `python3 scripts/wiki_manager.py index` to rebuild the index.
+   - **Agent-primary method (preferred):** Parse frontmatter yourself for concepts/names, check which pages exist, create new / update existing pages via `delegate_task` or directly, then rebuild index. This avoids the script's Gemini CLI timeout issues.
+   - Skip wiki ingestion ONLY if the user explicitly says to skip it.
 
 ## ⚠️ Concept Limits
 
@@ -122,8 +123,10 @@ When digesting 2-3 papers at once (e.g., as preparation for expanding an essay),
 After all subagents complete:
 1. Verify both digests exist and have proper frontmatter
 2. Update paper-queue status to `digested` for each paper
-3. Run `wiki_manager.py index` to rebuild the index
+3. **Run FULL wiki ingestion for each digest** — create/update concept and name pages. Can parallelize: batch the ingestions into 2 `delegate_task` subagents (e.g., 2 digests per subagent). Each subagent checks for existing pages, creates new ones, updates existing ones, then runs `wiki_manager.py index`.
 4. Proceed with any downstream task (essay expansion, etc.)
+
+**Pitfall from experience:** Index rebuild alone is NOT sufficient — user expects full concept/name page creation. Forgetting this step caused a correction. Also, when running wiki ingestion in parallel subagents, they may concurrently modify the same concept page (e.g., both digests reference "KV Cache"). The subagents handle this via read-then-patch, but watch for duplicate YAML keys in frontmatter after concurrent edits.
 
 This pattern was validated for 2 parallel digests (Orca + PagedAttention) completing in ~160s total vs ~300s sequential.
 
