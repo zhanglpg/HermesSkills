@@ -56,6 +56,7 @@ status: 📥
 
 **File as comparison** (to `gen-notes/comparisons/`):
 - Side-by-side comparisons of papers, methods, or approaches
+- Multi-paper evolutionary narratives (e.g., how a technique developed across 3+ papers)
 
 **File as synthesis** (to `gen-notes/syntheses/`):
 - Answers that required reading 3+ wiki pages
@@ -66,6 +67,38 @@ status: 📥
 - Simple factual lookups ("when was X published?")
 - Answers from a single page
 - Trivial questions
+
+## Multi-Paper Synthesis Essay Workflow
+
+When the user asks for a deep synthesis across a series of related digests (e.g., "trace the evolution of X" or "compare these papers"), use this workflow:
+
+### Step 1: Draft
+Write the full essay drawing from the digest pages. Include:
+- Mermaid diagrams (`graph TD`, `flowchart LR`, `sequenceDiagram`, `gantt`) — 4-6 per essay for architecture/evolution
+- Key equations (LaTeX `$$...$$`) where the method is mathematical
+- A concrete worked example with real numbers (model sizes, GPU counts, latencies) — this is the highest-impact quality signal
+- Explicit connections between papers (what each built on, what it added)
+- Open questions and future directions section
+
+### Step 2: Critic Pass
+Run a single `delegate_task` critic with specific review dimensions:
+```
+delegate_task(goal="Critically review this essay...",
+  context="Essay at /tmp/draft.md. Check: (1) technical accuracy,
+  (2) structure/flow, (3) Mermaid correctness, (4) equation accuracy,
+  (5) writing quality, (6) missing perspectives",
+  toolsets=["file"], max_iterations=15)
+```
+
+### Step 3: Polish
+Apply the critic's fixes. Common high-value fixes from experience:
+- **Taxonomy consistency** — if you define a generational framework, ensure every "generation" meets the stated criteria (e.g., if "each generation adds a disaggregation boundary," don't include an optimization that isn't a boundary)
+- **Equation precision** — critics catch unit errors, wrong variable definitions, and formulas that invite scrutiny without clear approximation conditions
+- **Concrete numbers** — add a worked example with specific model/hardware configs; abstract cost models are forgettable
+- **Missing failure modes** — fault tolerance, scheduling complexity, and operational overhead are commonly absent from systems synthesis
+
+### Step 4: Save
+Save to `gen-notes/comparisons/` (not syntheses/) with proper frontmatter including `domain:` tag, `type: comparison`, and `sources:` linking to all referenced digests.
 
 ## Notes
 
