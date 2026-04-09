@@ -13,6 +13,7 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
    - arXiv link: navigate to the HTML version (`arxiv.org/html/<id>`) via browser, then use `browser_console` with JS to bulk-extract all section text at once (see technique below). This is far more efficient than scrolling/snapshotting. If HTML is unavailable, fetch the `/pdf` URL using the `pdf` tool.
    - Blog post / web article: use `web_fetch`
    - PDF URL: use the `pdf` tool directly
+   - GitHub repo (library/framework): navigate to the repo's README and any linked docs/papers. Some important work (e.g., DeepEP) is released as open-source code with a detailed README rather than a traditional paper — treat the README + any technical blog post as the primary source.
    - Title only: search for it first with `web_search`, then fetch the best result
 
    **arXiv HTML extraction technique (preferred):**
@@ -94,6 +95,10 @@ source: https://...
 ## Mermaid Diagrams
 
 Include 1-2 Mermaid diagrams in each digest to visually illustrate the paper's core architecture, data flow, or key mechanism. Place them after the "Method / How It Works" section. Use `graph TD`, `flowchart LR`, or `sequenceDiagram` as appropriate. Keep diagrams readable — max ~15 nodes. Obsidian renders Mermaid natively.
+
+**Mermaid pitfalls:**
+- **No trailing spaces after subgraph declarations.** `subgraph Foo["Label"]    ` (with trailing spaces) causes a parse error: `Expecting 'SEMI', 'NEWLINE', 'EOF', got 'SPACE'`. Always ensure subgraph lines have no trailing whitespace.
+- **No blank lines inside subgraph blocks** — some Mermaid renderers treat them as block terminators.
 
 ## Key Equations
 
