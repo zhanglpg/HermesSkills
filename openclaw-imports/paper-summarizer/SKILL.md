@@ -130,6 +130,22 @@ After all subagents complete:
 
 This pattern was validated for 2 parallel digests (Orca + PagedAttention) completing in ~160s total vs ~300s sequential.
 
+## Digest-to-Expand-Essay Workflow
+
+When an existing essay references papers shallowly (e.g., "Orca introduced continuous batching"), digest those foundational papers, then weave the depth back into the essay. This is a common pattern for comparison essays and tutorials.
+
+### Steps:
+1. **Identify gaps**: Read the essay, find papers mentioned but not substantively covered
+2. **Batch-digest**: Digest 2-3 papers in parallel via `delegate_task` (each subagent fetches + writes to vault)
+3. **Mark as digested** in paper queue: `paper_queue.py status <id> digested`
+4. **Run wiki ingestion** for each new digest (MANDATORY — see step 5 in main workflow)
+5. **Read digests + essay**: Load both to understand what depth is available
+6. **Expand the essay**: Patch the shallow section with substantive content from digests — concrete mechanisms, equations, diagrams, numbers. Don't just add a paragraph; restructure the section with subsections if the added depth warrants it.
+7. **Update essay frontmatter**: Add new digest wikilinks to the `sources:` list
+
+### Key lesson from experience:
+When expanding Gen 0 of the Disaggregation Thesis essay with Orca + vLLM digests, the expansion went from 3 bullet points to 4 subsections (2.1 Orca, 2.2 PagedAttention, 2.3 Complementary Foundation, 2.4 MoE Utilization Problem). The subsection structure made it possible to thread the "parameter-free attention" insight across the entire essay — connecting it to why selective batching works, why P/D disaggregation is clean, and why attention-FFN disaggregation is possible. The essay grew from 395 to 538 lines but became structurally stronger because each generation's section could reference the Gen 0 depth.
+
 ## Reading backlog mode
 
 When asked to work through the reading backlog:
