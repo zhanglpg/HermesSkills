@@ -146,6 +146,23 @@ When an existing essay references papers shallowly (e.g., "Orca introduced conti
 ### Key lesson from experience:
 When expanding Gen 0 of the Disaggregation Thesis essay with Orca + vLLM digests, the expansion went from 3 bullet points to 4 subsections (2.1 Orca, 2.2 PagedAttention, 2.3 Complementary Foundation, 2.4 MoE Utilization Problem). The subsection structure made it possible to thread the "parameter-free attention" insight across the entire essay — connecting it to why selective batching works, why P/D disaggregation is clean, and why attention-FFN disaggregation is possible. The essay grew from 395 to 538 lines but became structurally stronger because each generation's section could reference the Gen 0 depth.
 
+## Publishing workflow
+
+When essays or digests are published to GitHub Gist:
+
+1. **After publishing**: Add `published: <gist_url>` to YAML frontmatter
+2. **On any update**: If a file has a `published:` field, republish it: `gh gist edit <gist_id> <file_path>`
+3. **Mermaid for vertical screens**: Prefer `flowchart TD` over `flowchart LR` for Gist/mobile readability. Keep sequence diagrams to ≤3 participants. Shorten node labels.
+
+## Essay fact-checking workflow
+
+Before finalizing a tutorial/comparison essay, run a parallel review via `delegate_task` with 3 subagents:
+1. **Architecture fact-check**: Verify model dimensions against HuggingFace config (`https://huggingface.co/api/models/<org>/<model>` returns config JSON) and source papers
+2. **Systems claims check**: Verify throughput/latency numbers against source paper digests in the vault
+3. **Writing review**: Check narrative flow, logical gaps, diagram correctness, detail consistency, redundancy, conclusion quality
+
+Key finding: HuggingFace API (`/api/models/`) returns the full `config.json` without auth — more reliable than trying to `curl` the raw file. Use `python3 -c "import urllib.request, json; ..."` to fetch and parse.
+
 ## Reading backlog mode
 
 When asked to work through the reading backlog:

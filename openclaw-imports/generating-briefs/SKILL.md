@@ -46,6 +46,9 @@ Fetch content from ALL configured sources. **Use browser tools directly** — th
 - **DO NOT delegate web fetching to subagents** — they frequently lack web/browser tools or fabricate data (hallucinated repos, fake HN stories). Always fetch directly with browser_navigate + browser_console JS extraction.
 - **arXiv API (`export.arxiv.org`) is unreliable from sandboxed environments** — timeouts are common. Instead, navigate directly to `https://arxiv.org/list/cs.AI/new` (or cs.LG/new) via browser and extract papers with JS.
 - **RSS feeds are lower-value than direct site visits** — most newsletter RSS feeds (TLDR, Ben's Bites, etc.) often fail or return stale content. Prioritize direct browser visits to key blogs (Simon Willison, AI lab blogs).
+- **OpenAI's news page (`openai.com/news/`) is blocked by Cloudflare bot detection** — returns "Just a moment..." page. Skip it and rely on web search or other sources for OpenAI news instead.
+- **Google DeepMind blog only shows month/year timestamps** (e.g., "April 2026"), not exact dates — makes freshness filtering unreliable. Cross-reference with other sources to confirm recency.
+- **For cs.LG (92+ papers), use keyword filtering** — extract all papers via JS, then filter client-side with a regex for AI/LLM-relevant terms (LLM, language model, transformer, reasoning, agent, reinforcement, diffusion, attention, fine-tun, alignment, benchmark, scaling, multimodal, safety, hallucin, generation, vision, neural). This reduces noise dramatically.
 
 #### Hacker News (most reliable source)
 Navigate to `https://news.ycombinator.com/front?day=YYYY-MM-DD` (yesterday's date UTC) for scored/ranked stories. Use JS console extraction:
