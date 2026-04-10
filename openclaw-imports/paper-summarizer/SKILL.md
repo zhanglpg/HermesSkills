@@ -163,6 +163,10 @@ Before finalizing a tutorial/comparison essay, run a parallel review via `delega
 
 Key finding: HuggingFace API (`/api/models/`) returns the full `config.json` without auth — more reliable than trying to `curl` the raw file. Use `python3 -c "import urllib.request, json; ..."` to fetch and parse.
 
+**Pitfall — nested configs for multimodal models:** Models like `Qwen3_5MoeForConditionalGeneration` store architecture details in `config["text_config"]` and `config["vision_config"]` sub-dicts, not at the top level. Always check for nested config structures.
+
+**Pitfall — don't assume layer counts from model names or secondary sources.** Always verify `first_k_dense_replace` (or equivalent) in the actual HF config. In this session, "first 3 layers dense" was assumed for DeepSeek-V3 but the actual config showed `first_k_dense_replace=1` (only layer 0 is dense). This cascaded to wrong MoE layer counts (58 vs 60) and wrong all-to-all operation counts (116 vs 120) throughout an essay.
+
 ## Reading backlog mode
 
 When asked to work through the reading backlog:
