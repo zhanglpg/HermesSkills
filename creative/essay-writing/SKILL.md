@@ -108,10 +108,19 @@ While the review runs, create diagrams via `delegate_task` (up to 3 in parallel)
 **Use Mermaid diagrams, NOT Excalidraw.** Excalidraw produces separate `.excalidraw` files that don't render inline in Obsidian or GitHub Gist. Mermaid diagrams are self-contained code blocks in the markdown — they render natively in Obsidian, GitHub, and any Mermaid-aware viewer. This matters because essays are typically published to GitHub Gist or shared as markdown.
 
 Useful Mermaid diagram types for essays:
-- `graph LR` / `graph TD` — pipeline comparisons, architecture diagrams
-- `flowchart TD` — decision flowcharts with diamond decisions
+- `flowchart TD` / `graph TD` — **preferred default** for vertical-screen readability (phones, tablets, split-screen). Flows top-to-bottom.
+- `flowchart LR` / `graph LR` — use sparingly, only when horizontal flow is semantically essential (e.g., a short pipeline with ≤3 stages). These get too wide on vertical screens.
+- `sequenceDiagram` — limit to **3 participants max**. 4+ participants create very wide diagrams. Shorten participant labels.
+- `gantt` — acceptable, auto-scales. Keep section names short.
 - `timeline` — chronological events
+- `pie` — good for budget/proportion breakdowns
 - Use consistent color coding across diagrams (e.g., `style X fill:#a5d8ff` for one topic, `fill:#b2f2bb` for another)
+
+**Vertical-screen optimization (learned from experience):**
+- Convert `flowchart LR` with subgraphs → `flowchart TD` with subgraphs stacked vertically and explicit flow arrows between them
+- For long LR chains (5+ nodes), switch to TD — the chain becomes a column
+- Sequence diagrams: reduce participants by combining related actors (e.g., "GPU 0, GPU 1, GPU 2, GPU 31" → "GPU 0, GPU 1, GPU N")
+- Shorten node labels: "73 tokens for experts 8-15" → "73 tokens"
 
 ### Phase 2.5: Reference Material Integration (optional but high-impact)
 
@@ -145,6 +154,17 @@ Section N successfully [specific goal of the revision]."
    - Key improvements made
    - Diagram links (if created)
 5. If delivery to another platform is requested (Discord, Telegram, etc.), use a cron job with `deliver` target for the final report.
+
+### Phase 4: Publishing to GitHub Gist
+
+When essays are published to GitHub Gist:
+
+1. **Publish:** `gh gist create "<filename>.md" --desc "<title>" --public`
+2. **Add URL to frontmatter:** Add `published: <gist_url>` to the essay's YAML frontmatter immediately after publishing
+3. **Republish on every update:** Whenever an essay with a `published:` field is modified, always republish: `gh gist edit <gist_id> "<filepath>"`
+4. Extract the gist ID from the URL (last path segment) for the edit command
+
+This is mandatory — every essay update must be followed by a republish if it has a `published:` URL.
 
 ## File Structure
 
