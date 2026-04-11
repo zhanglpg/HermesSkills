@@ -151,6 +151,14 @@ Useful Mermaid diagram types for essays:
 - Sequence diagrams: reduce participants by combining related actors (e.g., "GPU 0, GPU 1, GPU 2, GPU 31" → "GPU 0, GPU 1, GPU N")
 - Shorten node labels: "73 tokens for experts 8-15" → "73 tokens"
 
+**Mermaid patterns that break in Obsidian/GitHub rendering:**
+- **Wide fan-out trees (6+ children from one root):** Split into 2 rows of 3 using a hidden second root node (`A2[ ] -->` with `style A2 fill:none,stroke:none`). Prevents horizontal overflow.
+- **Side-by-side subgraphs:** Mermaid renders `subgraph` blocks horizontally next to each other, causing overflow. Remove subgraphs and use plain node groups instead -- Mermaid will stack them vertically.
+- **Invisible edges for positioning (`-.-` or `-.->`):** Don't use dotted/invisible edges to position nodes. They create visual noise and don't reliably control layout. Use `quadrantChart` for 2D positioning instead.
+- **`quadrantChart`:** Use for any "landscape" or positioning diagram (scope vs. maturity, cost vs. quality). Values are `[x, y]` in 0-1 range. Much cleaner than trying to fake a scatter plot with `graph`.
+- **`<br><i>...</i>` in subgraph titles:** Subgraph titles with complex formatting may not render. Keep subgraph names simple.
+- **Emoji in nodes:** Works in Obsidian but may not render in all Mermaid implementations. Use sparingly.
+
 ### Phase 2.5: Reference Material Integration (optional but high-impact)
 
 When the essay compares or analyzes papers, **read the paper digests and source notes** (e.g., from Obsidian gen-notes/digests/) for the referenced foundational works. Weave the intellectual lineage into the essay — explain how the papers build on each other, what each predecessor contributed, and how the lineage clarifies the current dispute or comparison.
@@ -192,6 +200,7 @@ When essays are published to GitHub Gist:
 2. **Add URL to frontmatter:** Add `published: <gist_url>` to the essay's YAML frontmatter immediately after publishing
 3. **Republish on every update:** Whenever an essay with a `published:` field is modified, always republish: `gh gist edit <gist_id> "<filepath>"`
 4. Extract the gist ID from the URL (last path segment) for the edit command
+5. **Author byline:** Include "assisted by [agent name] ([model])" next to the author name. Format: `**Liping Zhang, assisted by Hermes Agent (GLM-5.1) | Date**`. Use the actual model currently running -- don't assume Claude.
 
 This is mandatory — every essay update must be followed by a republish if it has a `published:` URL.
 
