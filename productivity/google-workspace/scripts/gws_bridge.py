@@ -3,6 +3,7 @@
 
 Refreshes the token if expired, then executes gws with the valid access token.
 """
+
 import json
 import os
 import subprocess
@@ -25,12 +26,14 @@ def refresh_token(token_data: dict) -> dict:
     import urllib.parse
     import urllib.request
 
-    params = urllib.parse.urlencode({
-        "client_id": token_data["client_id"],
-        "client_secret": token_data["client_secret"],
-        "refresh_token": token_data["refresh_token"],
-        "grant_type": "refresh_token",
-    }).encode()
+    params = urllib.parse.urlencode(
+        {
+            "client_id": token_data["client_id"],
+            "client_secret": token_data["client_secret"],
+            "refresh_token": token_data["refresh_token"],
+            "grant_type": "refresh_token",
+        }
+    ).encode()
 
     req = urllib.request.Request(token_data["token_uri"], data=params)
     try:
