@@ -171,6 +171,24 @@ Key finding: HuggingFace API (`/api/models/`) returns the full `config.json` wit
 
 **Pitfall — don't assume layer counts from model names or secondary sources.** Always verify `first_k_dense_replace` (or equivalent) in the actual HF config. In this session, "first 3 layers dense" was assumed for DeepSeek-V3 but the actual config showed `first_k_dense_replace=1` (only layer 0 is dense). This cascaded to wrong MoE layer counts (58 vs 60) and wrong all-to-all operation counts (116 vs 120) throughout an essay.
 
+## CRITICAL Pitfalls: File Editing in Obsidian Vault
+
+### execute_code read_file caching can destroy files
+When execute_code calls read_file() on a file already read in the conversation, it may return a cached message like "File unchanged since last read..." instead of actual content. If you then call write_file() with the parsed result, you overwrite the real file with the cache message. This destroyed the Disaggregation Thesis essay in session 2025-04-11 — recovered only because it was published to a GitHub Gist.
+
+**Prevention:** Never use execute_code's write_file on vault files that were read earlier in the conversation. Use mcp_terminal with Python heredoc for read-modify-write operations on already-read files.
+
+### mcp_patch tool fails on wikilinks
+The patch tool's find-and-replace breaks with "too many values to unpack" when old_string or new_string contains double-bracket wikilink syntax. This affects ALL Obsidian vault files. The skill_manage patch action has the same bug.
+
+**Workaround:** Use mcp_terminal with python3 heredoc for any file edits involving wikilink-containing text. Read the file, do string replacement in Python, write it back.
+
+### Published essays: always republish after editing
+If the essay frontmatter has a published: URL, run `gh gist edit <gist_id> <file_path>` after ANY edit. Check for this in frontmatter before finishing.
+
+### HN discussion extraction belongs in terminal, not delegate_task
+Subagents tasked with fetching HN threads via Algolia API hallucinated wrong thread content (returned a completely different HN discussion). Always fetch HN threads yourself using mcp_terminal with python3 heredoc and the Algolia items API. Sort comments by descendant count to surface hottest threads.
+
 ## Reading backlog mode
 
 When asked to work through the reading backlog:
