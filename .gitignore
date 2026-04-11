@@ -7,3 +7,6 @@ htmlcov/
 *.egg-info/
 .ruff_cache/
 .paper_queue/
+*.db-shm
+*.db-wal
+*.db-journal
