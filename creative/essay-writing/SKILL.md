@@ -9,17 +9,46 @@ Write essays through an iterative draft-review cycle using two models:
 - **Writer:** Current agent (Claude Opus) — drafts, revises, polishes
 - **Reviewer:** GLM-5.1 (via `hermes chat -m glm-5.1 --provider zai`) — critiques, scores, suggests improvements
 
-## Pitfalls
+## Pitfalls & Reviewer Reliability
 
-- **Provider routing:** `hermes chat -m zai/glm-5.1` does NOT work — Hermes sends it to Anthropic. Must use `-m glm-5.1 --provider zai` (model and provider as separate flags).
-- **Always use direct invocation, not review.sh:** The review.sh script times out at 120s but the review process takes 2-3 minutes (Hermes startup + banner + tool discovery + skill loading + actual generation). Direct invocation with `timeout=180` is the only reliable approach:
-  ```bash
-  ESSAY="$(cat draft-N.md)" && hermes chat -m glm-5.1 --provider zai -q "...$ESSAY..." 2>/dev/null | sed -n '/^#/,$p'
-  ```
-  Filter banner with `2>/dev/null` on stderr + `sed -n '/^#/,$p'` on stdout to extract just the review.
-- **GLM-5.1 duplication:** GLM-5.1 sometimes outputs the full review twice in one response. The review script captures the raw output; when parsing, use only the first occurrence (split on the second `# Essay Review` header if present).
-- **Long essays:** The review script passes essay content inline via shell argument. For essays >15K chars, this may hit shell argument limits. In that case, use `hermes chat` with a tempfile-based approach or truncate to the most important sections.
-- **`-Q` flag:** The quiet flag (`-Q`) suppresses the banner but may cause exit code 1 on some setups. The review script omits it and filters the output. If banner noise appears in reviews, pipe through `sed -n '/^#/,$p'` to extract from the first markdown header onward.
+### Primary reviewer: `delegate_task` (RECOMMENDED)
+
+The most reliable review approach is `delegate_task` — the subagent has its own API access, reads files directly, and avoids shell escaping issues with long essays:
+
+```python
+delegate_task(
+    goal="Read and critically review the essay at <path>. Act as a demanding reviewer...",
+    context="Essay path: <full_path>\n\nFocus on: fact-check numbers, logical consistency, missing considerations, practical realism. Write review to /tmp/review.md",
+    toolsets=["terminal", "file"]
+)
+```
+
+This works even when the ZAI API is rate-limited or unavailable.
+
+### Fallback: Direct API calls via `execute_code`
+
+If `delegate_task` is unavailable, call the reviewer API directly with streaming:
+
+```python
+# In execute_code, use http.client for direct API call
+import http.client, json, ssl
+conn = http.client.HTTPSConnection("api.z.ai", timeout=300)
+body = json.dumps({"model": "glm-5.1", "messages": [...], "stream": True}).encode()
+conn.request("POST", "/api/coding/paas/v4/chat/completions", body, headers={...})
+# Parse SSE stream
+```
+
+### ZAI/GLM-5.1 known issues
+
+- **Rate limiting:** ZAI API returns HTTP 429 ("temporarily overloaded") frequently, especially with long prompts. Retry with 60s backoff, max 3 attempts.
+- **Timeout:** Non-streaming requests timeout at ~180s for long essays. Always use `stream: True`.
+- **hermes CLI `-q` flag:** Passing long essays via `-q "$(cat file)"` often hangs or fails with shell argument limits. Avoid for essays >10K chars.
+- **Provider routing:** `hermes chat -m zai/glm-5.1` does NOT work — routes to Anthropic. Must use `-m glm-5.1 --provider zai`.
+- **GLM-5.1 duplication:** Sometimes outputs the review twice. Use only the first occurrence.
+
+### When all external models fail
+
+Use `delegate_task` without specifying a model — it uses the session's current model. While not a "different model" review, it still provides a fresh-context critique since subagents have no conversation history.
 
 ## Workflow
 

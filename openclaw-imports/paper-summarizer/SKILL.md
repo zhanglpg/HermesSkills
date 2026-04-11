@@ -15,6 +15,10 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
    - PDF URL: use the `pdf` tool directly
    - GitHub repo (library/framework): navigate to the repo's README and any linked docs/papers. Some important work (e.g., DeepEP) is released as open-source code with a detailed README rather than a traditional paper — treat the README + any technical blog post as the primary source.
    - Title only: search for it first with `web_search`, then fetch the best result
+   - **Blog post + HN/community discussion:** When the user provides both an article and its discussion thread, treat them as a combined source. Fetch the article normally (delegate_task or web_fetch). For HN discussions, use the Algolia API via `mcp_terminal` heredoc — do NOT delegate HN scraping to subagents (they hallucinate wrong threads). The digest should synthesize both the author argument AND the community debate (camps, counterarguments, representative quotes). See HN extraction technique below.
+
+   **HN discussion extraction (via terminal heredoc):**
+   Use `mcp_terminal` with `python3 << PYEOF` to fetch `https://hn.algolia.com/api/v1/items/<ID>`. Parse with `urllib.request` + `json.loads(resp.read().decode())`. Sort top-level comments by total descendant count (recursive `count_all` helper) to surface the hottest threads. Print top 15 threads with 3 replies each. **Why heredoc not execute_code:** Algolia returns large JSON (>50KB for 300+ comment threads); `execute_code` terminal() helper truncates stdout causing JSON parse failures mid-JSON.
 
    **arXiv HTML extraction technique (preferred):**
    ```javascript
