@@ -64,8 +64,9 @@ Emoji (📋, ⚡, ✅, etc.) cause rendering failures in some Mermaid versions. 
 - `"Name - Detail"` works
 - `"Name: Detail"` works
 
-### 8. `<br>` in Edge Labels and Node Labels
-`A -->|"line1<br>line2"| B` — `<br>` in edge labels often breaks. Use single-line labels or split into separate edges. In node labels, use `\n` instead of `<br/>` or `<br>` for line breaks.
+### 8. Line Breaks in Labels
+- **Node labels:** Use `<br>` inside quoted labels for line breaks: `A["Line 1<br>Line 2"]`. Do NOT use `\n` — it renders as literal text in Obsidian. Always quote labels containing `<br>`.
+- **Edge labels:** `<br>` in edge labels often breaks. Use single-line labels or split into separate edges.
 
 ## Systematic Audit Method
 
@@ -99,6 +100,7 @@ for i, b in enumerate(blocks):
 | HTML tags | `<i>`, `<b>` in block | Strip tags, keep text |
 | Emoji | Unicode > U+2600 | Strip emoji, rely on style colors |
 | Parens in subgraph | `subgraph "...(..."` | Replace with dash or colon |
+| `\n` in node labels | Literal `\n` in node text | Replace with `<br>` in quoted label: `["A<br>B"]` |
 | `<br>` in edges | `<br>` inside edge label | Flatten to single line |
 
 ## Pitfalls
