@@ -13,12 +13,15 @@ Fix broken Mermaid diagrams in Obsidian and other Markdown renderers. Use when a
 
 When a Mermaid block is broken, check these in order:
 
-### 1. Unsupported Diagram Types
+### 1. `flowchart` Keyword
+**Use `graph` instead of `flowchart`.** Obsidian's bundled Mermaid version doesn't fully support `flowchart` — diagrams render as "Unsupported markdown". `graph LR`, `graph TD`, `graph TB` are the compatible equivalents.
+
+### 2. Unsupported Diagram Types
 - **`timeline`** — not supported in many renderers (Obsidian < 1.5, GitHub). Rewrite as `graph LR` with subgraphs.
 - **`mindmap`** — limited support. Rewrite as `graph TB` with tree edges.
-- **`sankey`** — not supported outside mermaid-live. Rewrite as `flowchart`.
+- **`sankey`** — not supported outside mermaid-live. Rewrite as `graph LR`.
 
-### 2. Nested Subgraphs
+### 3. Nested Subgraphs
 **Most common cause of silent rendering failure.** Many renderers don't support subgraphs-inside-subgraphs. Fix: flatten to a single level.
 
 ```
@@ -37,12 +40,12 @@ graph TB
     end
 ```
 
-### 3. Hard Syntax Errors
+### 4. Hard Syntax Errors
 - **Dangling edge** — `A -->|"label"|` with no target node after the pipe. Must have a target.
 - **Unmatched quotes** — `A["text"]` must close the bracket and quote.
 - **Special chars in unquoted labels** — use quotes: `A["label with : special chars"]`.
 
-### 4. HTML Tags in Nodes
+### 5. HTML Tags in Nodes
 `<i>`, `<b>`, `<em>`, `<strong>` work in mermaid-live but **fail in Obsidian and many embedded renderers**. Strip them:
 
 ```
@@ -53,16 +56,16 @@ A["<b>Title</b><br><i>subtitle</i>"]
 A["Title<br>subtitle"]
 ```
 
-### 5. Emoji in Nodes
+### 6. Emoji in Nodes
 Emoji (📋, ⚡, ✅, etc.) cause rendering failures in some Mermaid versions. Strip them — the node content should be plain text. Use `style` directives for color instead.
 
-### 6. Parentheses in Subgraph Names
+### 7. Parentheses in Subgraph Names
 `subgraph "Name (Detail)"` can fail. Replace parens with dashes or colons:
 - `"Name - Detail"` works
 - `"Name: Detail"` works
 
-### 7. `<br>` in Edge Labels
-`A -->|"line1<br>line2"| B` — `<br>` in edge labels often breaks. Use single-line labels or split into separate edges.
+### 8. `<br>` in Edge Labels and Node Labels
+`A -->|"line1<br>line2"| B` — `<br>` in edge labels often breaks. Use single-line labels or split into separate edges. In node labels, use `\n` instead of `<br/>` or `<br>` for line breaks.
 
 ## Systematic Audit Method
 
@@ -89,6 +92,7 @@ for i, b in enumerate(blocks):
 
 | Issue | Detection | Fix |
 |-------|-----------|-----|
+| `flowchart` keyword | First line starts with `flowchart` | Replace with `graph` (e.g., `graph LR`, `graph TD`) |
 | `timeline` type | First line of block | Rewrite as `graph LR` with subgraphs |
 | Nested subgraphs | Subgraph count vs indentation | Flatten to single level |
 | Dangling edge | Edge with label but no target | Add target node |
