@@ -7,9 +7,9 @@ Usage:
     python3 detect.py <file.md> --stats      # summary counts only
 """
 
+import json
 import re
 import sys
-import json
 
 PATTERNS = {
     "hedging_filler": {
@@ -60,9 +60,7 @@ PATTERNS = {
         "label": "Grandiose framing",
         "patterns": [
             re.compile(r"(?:In the (?:rapidly )?(?:evolving|changing|emerging) landscape of)", re.I),
-            re.compile(
-                r"(?:represents? a (?:paradigm shift|fundamental shift|sea change|watershed moment))", re.I
-            ),
+            re.compile(r"(?:represents? a (?:paradigm shift|fundamental shift|sea change|watershed moment))", re.I),
             re.compile(r"(?:revolutioniz(?:ing|es?|ed))", re.I),
             re.compile(r"(?:a (?:cornerstone|testament|beacon) of)", re.I),
             re.compile(r"(?:paving the way for|at the forefront of)", re.I),
@@ -74,7 +72,9 @@ PATTERNS = {
             re.compile(r"(?:In the (?:next|following) section,? we)", re.I),
             re.compile(r"^In conclusion,?\s", re.I | re.M),
             re.compile(r"^In summary,?\s", re.I | re.M),
-            re.compile(r"(?:As (?:we )?(?:discussed|described|mentioned|noted) (?:in |above|earlier|previously))", re.I),
+            re.compile(
+                r"(?:As (?:we )?(?:discussed|described|mentioned|noted) (?:in |above|earlier|previously))", re.I
+            ),
         ],
     },
 }
@@ -140,7 +140,7 @@ def main():
     print(f"Found {len(findings)} AI patterns:\n")
     for f in findings:
         print(f"  L{f['line']:4d}  [{f['label']}]")
-        print(f"         matched: \"{f['match']}\"")
+        print(f'         matched: "{f["match"]}"')
         print(f"         context: {f['context'][:120]}")
         print()
 
