@@ -48,7 +48,7 @@ Remade for openclaw from original repo : https://github.com/pskoett/pskoett-ai-s
 OpenClaw injects these files into every session:
 
 ```
-~/.openclaw/workspace/
+~/.hermes/workspace/
 ├── AGENTS.md          # Multi-agent workflows, delegation patterns
 ├── SOUL.md            # Behavioral guidelines, personality, principles
 ├── TOOLS.md           # Tool capabilities, integration gotchas
@@ -64,7 +64,7 @@ OpenClaw injects these files into every session:
 ### Create Learning Files
 
 ```bash
-mkdir -p ~/.openclaw/workspace/.learnings
+mkdir -p ~/.hermes/workspace/.learnings
 ```
 
 Then create the log files (or copy from `assets/`):

@@ -9,7 +9,7 @@ OpenClaw uses workspace-based prompt injection combined with event-driven hooks.
 ## Workspace Structure
 
 ```
-~/.openclaw/                      
+~/.hermes/
 ├── workspace/                   # Working directory
 │   ├── AGENTS.md               # Multi-agent coordination patterns
 │   ├── SOUL.md                 # Behavioral guidelines and personality
@@ -59,7 +59,7 @@ openclaw hooks enable self-improvement
 Create the `.learnings/` directory in your workspace:
 
 ```bash
-mkdir -p ~/.openclaw/workspace/.learnings
+mkdir -p ~/.hermes/workspace/.learnings
 ```
 
 Or in the skill directory:

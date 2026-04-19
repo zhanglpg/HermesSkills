@@ -10,7 +10,12 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
 ## Workflow
 
 1. **Fetch the content**
-   - arXiv link: navigate to the HTML version (`arxiv.org/html/<id>`) via browser, then use `browser_console` with JS to bulk-extract all section text at once (see technique below). This is far more efficient than scrolling/snapshotting. If HTML is unavailable, fetch the `/pdf` URL using the `pdf` tool.
+   - arXiv link: navigate to the HTML version (`arxiv.org/html/<id>`) via browser, then use `browser_console` with JS to bulk-extract all section text at once (see technique below). This is far more efficient than scrolling/snapshotting. If HTML is unavailable (common for older papers, e.g. pre-2021), use the **pdftotext fallback**:
+     ```bash
+     cd /tmp && curl -sL -o paper.pdf "https://arxiv.org/pdf/ID"
+     pdftotext -layout paper.pdf -  # outputs to stdout
+     ```
+     Papers are typically 100K–150K chars; read in ~15K-char chunks via `execute_code` with `subprocess.run(['pdftotext', '-layout', 'paper.pdf', '-'], capture_output=True, text=True)` then slice `text[0:15000]`, `text[15000:30000]`, etc. Five to six chunks covers most papers. This reliably extracts full content including equations, tables, and algorithm boxes.
    - Blog post / web article: use `web_fetch`
    - PDF URL: use the `pdf` tool directly
    - GitHub repo (library/framework): navigate to the repo's README and any linked docs/papers. Some important work (e.g., DeepEP) is released as open-source code with a detailed README rather than a traditional paper — treat the README + any technical blog post as the primary source.
@@ -49,7 +54,7 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
 
 5. **After digest — wiki integration (MANDATORY):**
    - **ALWAYS run full wiki ingestion** after every digest. This is not optional. The user expects concept and name pages to be created/updated every time.
-   - **Workflow:** Run `wiki_manager.py ingest <path> --extract-only` to get concepts/names, then create/update concept and name pages (see wiki-manager skill), then run `python3 scripts/wiki_manager.py index` to rebuild the index.
+   - **Workflow:** Run `wiki_manager.py ingest <path> --extract-only` to get concepts/names, then create/update concept and name pages (see wiki-manager skill), then run `python3 scripts/wiki_manager.py index` to rebuild the index. (Note: command is `index`, not `rebuild-index`.)
    - **Agent-primary method (preferred):** Parse frontmatter yourself for concepts/names, check which pages exist, create new / update existing pages via `delegate_task` or directly, then rebuild index. This avoids the script's Gemini CLI timeout issues.
    - Skip wiki ingestion ONLY if the user explicitly says to skip it.
 

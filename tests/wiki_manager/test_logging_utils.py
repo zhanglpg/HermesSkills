@@ -13,7 +13,7 @@ class TestGetAgentDataDir:
     def test_fallback(self, monkeypatch):
         monkeypatch.delenv("AGENT_DATA_DIR", raising=False)
         result = get_agent_data_dir()
-        assert ".openclaw" in result
+        assert ".hermes" in result
 
 
 class TestSetupLogger:

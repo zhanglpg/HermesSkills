@@ -35,7 +35,7 @@ def get_agent_data_dir() -> str:
     val = os.environ.get("AGENT_DATA_DIR")
     if val:
         return val
-    fallback = os.path.expanduser("~/.openclaw")
+    fallback = os.path.expanduser("~/.hermes")
     logging.warning("AGENT_DATA_DIR is not set — falling back to %s.", fallback)
     os.environ["AGENT_DATA_DIR"] = fallback
     return fallback

@@ -43,12 +43,23 @@ Parse the JSON output and use these exact prices and change percentages in the M
 Fetch content from ALL configured sources. **Use browser tools directly** — they are far more reliable than delegating to subagents for web fetching (subagents often lack web tools or hallucinate data).
 
 #### Pitfalls Learned
-- **DO NOT delegate web fetching to subagents** — they frequently lack web/browser tools or fabricate data (hallucinated repos, fake HN stories). Always fetch directly with browser_navigate + browser_console JS extraction.
-- **arXiv API (`export.arxiv.org`) is unreliable from sandboxed environments** — timeouts are common. Instead, navigate directly to `https://arxiv.org/list/cs.AI/new` (or cs.LG/new) via browser and extract papers with JS.
+- **Parallel delegate_task WITH browser toolsets IS safe and fast** — using `delegate_task(tasks=[...])` with `toolsets: ["browser"]` on each task works reliably. Subagents CAN use browser_navigate + browser_console successfully when explicitly given browser toolsets. Use this pattern to fetch 3 sources concurrently and save significant time (e.g., GitHub Trending + The Verge + Ars Technica in one batch, then Anthropic + Meta AI in another).
+- **DO NOT delegate web fetching to subagents WITHOUT browser toolsets** — if a subagent inherits default toolsets but lacks browser access, it will burn through its iteration budget and produce nothing. Always pass `toolsets: ["browser"]` explicitly.
+- **arXiv listing pages work reliably via browser** — navigate to `https://arxiv.org/list/cs.AI/new` (or cs.LG/new, cs.SE/new) via browser_navigate. The page heading shows the listing date (e.g., "Showing new listings for Friday, 10 April 2026"). Extract with browser_console using: `document.querySelectorAll('a[href^="/abs/"]')` for IDs, `.list-title` divs for titles, `.list-authors` divs for authors. Note: `.mathjax` abstracts from the listing page often misalign with papers due to DOM structure — use them for rough keyword filtering only.
+- **For detailed arXiv paper abstracts, fetch individual pages via Python temp file** — after identifying candidate papers from the listing, write a Python script to `/tmp/fetch_papers.py` using `write_file()`, then run with `terminal("python3 /tmp/fetch_papers.py")`. The script uses `urllib.request` to fetch each paper's `/abs/` page and parses `<meta name="citation_title">`, `<meta name="citation_author">`, `<meta name="citation_date">`, and the `<blockquote class="abstract mathjax">` for full metadata. This is far more reliable than browser_console extraction for abstracts.
+- **NEVER pass multi-line Python scripts inline to terminal()** — nested quotes (mixing `'` and `"`) in multi-line strings cause `SyntaxError: unterminated string literal`. Always write the script to a temp file via `write_file()` first, then execute it.
+- **arXiv API (`export.arxiv.org`) is unreliable from sandboxed environments** — timeouts are common. Prefer the listing pages approach above.
+- **GitHub Trending extraction**: use `document.querySelectorAll('article')` (not `article.Box-row`). Each article has an `h2 > a` for the repo name, a `p` for description, `[itemprop="programmingLanguage"]` for language, and `.float-sm-right` for today's stars.
 - **RSS feeds are lower-value than direct site visits** — most newsletter RSS feeds (TLDR, Ben's Bites, etc.) often fail or return stale content. Prioritize direct browser visits to key blogs (Simon Willison, AI lab blogs).
 - **OpenAI's news page (`openai.com/news/`) is blocked by Cloudflare bot detection** — returns "Just a moment..." page. Skip it and rely on web search or other sources for OpenAI news instead.
 - **Google DeepMind blog only shows month/year timestamps** (e.g., "April 2026"), not exact dates — makes freshness filtering unreliable. Cross-reference with other sources to confirm recency.
 - **For cs.LG (92+ papers), use keyword filtering** — extract all papers via JS, then filter client-side with a regex for AI/LLM-relevant terms (LLM, language model, transformer, reasoning, agent, reinforcement, diffusion, attention, fine-tun, alignment, benchmark, scaling, multimodal, safety, hallucin, generation, vision, neural). This reduces noise dramatically.
+- **HN front page extraction works well** — navigate to `https://news.ycombinator.com/front?day=YYYY-MM-DD`, then use browser_console with `document.querySelectorAll('.athing')` for rows and `row.nextElementSibling` for subtext (score + comments). Filter results client-side with AI keyword regex.
+- **Today's HN front page may be nearly empty** — if running early in the UTC day, the current day's page may have only 2-4 stories. Always check yesterday's page too (use both dates) and merge results.
+- **Google Search is blocked by bot detection** from browser — returns "unusual traffic" CAPTCHA page. Do NOT rely on Google Search for finding AI news. Instead, navigate directly to news sites: The Verge (`/ai-artificial-intelligence`), Ars Technica (`/ai/`), TechCrunch, etc.
+- **Twitter/X is completely inaccessible** — no x-cli available, nitter.net is dead (empty page), xcancel.com has bot detection. Skip the Twitter/X section entirely rather than wasting time on workarounds.
+- **browser_console JS must use IIFE wrapper** — `return` at top level causes `SyntaxError: Illegal return statement`. Always wrap JS in `(() => { ... })()`.
+- **arXiv doesn't update on weekends** — if running on Saturday/Sunday/Monday, the listings will be from the previous Friday. The page heading shows the exact listing date; always check it for freshness filtering.
 
 #### Hacker News (most reliable source)
 Navigate to `https://news.ycombinator.com/front?day=YYYY-MM-DD` (yesterday's date UTC) for scored/ranked stories. Use JS console extraction:
@@ -81,7 +92,11 @@ For each source in `rss_sources`, fetch the RSS URL and extract recent article t
 For each handle in `twitter_accounts`, search for their recent tweets (past 24-48 hours).
 
 #### Web-Only Sources
-For key blogs (Simon Willison, AI lab blogs), navigate directly to their homepage via browser and extract recent post titles/links. For others, search the web for their latest content.
+For key blogs (Simon Willison, AI lab blogs), navigate directly to their homepage via browser and extract recent post titles/links. For general AI news discovery, navigate directly to major news sites instead of relying on search engines:
+- **The Verge AI** (`https://www.theverge.com/ai-artificial-intelligence`) — excellent coverage, recent articles with timestamps, scrollable
+- **Ars Technica AI** (`https://arstechnica.com/ai/`) — strong technical AI coverage, includes syndicated FT/WIRED content
+- **TechCrunch AI** — good for startup/funding news
+These sites are far more reliable than Google Search (blocked by bot detection) or RSS feeds (often stale).
 
 #### Extra Quantitative Data (Portfolio only)
 If `extra_data_path` is set and the file exists, read and incorporate it. Warn if the data is more than 2 days old.

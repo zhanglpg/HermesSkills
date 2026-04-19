@@ -8,12 +8,12 @@ from typing import Optional
 def get_agent_data_dir() -> str:
     """Return the agent's data directory from AGENT_DATA_DIR env var.
 
-    Defaults to ~/.openclaw when not set (where openclaw data lives).
+    Defaults to ~/.hermes when not set (where Hermes data lives).
     """
     val = os.environ.get("AGENT_DATA_DIR")
     if val:
         return val
-    fallback = os.path.expanduser("~/.openclaw")
+    fallback = os.path.expanduser("~/.hermes")
     logging.warning(
         "AGENT_DATA_DIR is not set — falling back to %s. Set AGENT_DATA_DIR to control where skills write output.",
         fallback,
