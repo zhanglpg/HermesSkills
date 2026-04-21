@@ -20,6 +20,7 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
    - PDF URL: use the `pdf` tool directly
    - GitHub repo (library/framework): navigate to the repo's README and any linked docs/papers. Some important work (e.g., DeepEP) is released as open-source code with a detailed README rather than a traditional paper — treat the README + any technical blog post as the primary source.
    - Title only: search for it first with `web_search`, then fetch the best result
+   - **Ambiguous/misremembered titles:** If the user gives an acronym + descriptor that doesn't match (e.g., "LACE latent attention" when the paper is actually "LACE: Lattice Attention"), search arXiv by title acronym only (`ti:LACE`) with `sortBy=submittedDate&sortOrder=descending` — this reliably surfaces recent papers by acronym. The user's descriptor word (e.g., "latent") may be a misremembering of a similar-sounding word (e.g., "lattice"). Don't get stuck searching for the exact phrase the user provided.
    - **Blog post + HN/community discussion:** When the user provides both an article and its discussion thread, treat them as a combined source. Fetch the article normally (delegate_task or web_fetch). For HN discussions, use the Algolia API via `mcp_terminal` heredoc — do NOT delegate HN scraping to subagents (they hallucinate wrong threads). The digest should synthesize both the author argument AND the community debate (camps, counterarguments, representative quotes). See HN extraction technique below.
 
    **HN discussion extraction (via terminal heredoc):**

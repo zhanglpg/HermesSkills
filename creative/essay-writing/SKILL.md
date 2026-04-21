@@ -46,9 +46,30 @@ conn.request("POST", "/api/coding/paas/v4/chat/completions", body, headers={...}
 - **Provider routing:** `hermes chat -m zai/glm-5.1` does NOT work — routes to Anthropic. Must use `-m glm-5.1 --provider zai`.
 - **GLM-5.1 duplication:** Sometimes outputs the review twice. Use only the first occurrence.
 
+### delegate_task for content generation is UNRELIABLE
+
+**Do NOT use delegate_task for large content generation tasks** (translation, drafting, rewriting entire sections). Subagents — especially GLM-5.1 — frequently READ input files but FAIL to call write_file on the output. Observed failure rate: ~75% (3 out of 4 attempts read but never wrote). The subagent completes with empty summary despite having file+terminal toolsets.
+
+**Why this fails:** The subagent reads the source, generates the translation/content in its context, but then "forgets" or hits output token limits before calling write_file. The task appears complete from the outside.
+
+**What works instead:** Write content generation directly in the main agent using write_file. For very long content (>5K chars), write in multiple write_file calls (append mode) or compose the full string and write once. It's slower but reliable.
+
+**delegate_task IS reliable for:** Reviews, analysis, short summaries, file manipulation, code execution — tasks where the output is small or the tool call is simple.
+
 ### When all external models fail
 
 Use `delegate_task` without specifying a model — it uses the session's current model. While not a "different model" review, it still provides a fresh-context critique since subagents have no conversation history.
+
+### Translation workflow
+
+For translating essays to another language:
+1. Read the full source essay
+2. Translate directly in the main agent — do NOT delegate to subagents
+3. Keep all LaTeX, Mermaid, tables, and code blocks intact
+4. Keep proper nouns and abbreviations in the source language
+5. Maintain consistent technical terminology across sections (build a glossary first)
+6. Save as a NEW essay file in Obsidian vault (same directory, with language suffix)
+7. Publish to Gist as a separate gist (not editing the original)
 
 ## Workflow
 
