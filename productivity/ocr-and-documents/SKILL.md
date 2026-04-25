@@ -1,6 +1,6 @@
 ---
 name: ocr-and-documents
-description: Extract text from PDFs and scanned documents. Use web_extract for remote URLs, pymupdf for local text-based PDFs, marker-pdf for OCR/scanned docs. For DOCX use python-docx, for PPTX see the powerpoint skill.
+description: Extract text from PDFs and scanned documents. Use browser_navigate for remote URLs, pymupdf for local text-based PDFs, marker-pdf for OCR/scanned docs. For DOCX use python-docx, for PPTX see the powerpoint skill.
 version: 2.3.0
 author: Hermes Agent
 license: MIT
@@ -18,16 +18,17 @@ This skill covers **PDFs and scanned documents**.
 
 ## Step 1: Remote URL Available?
 
-If the document has a URL, **always try `web_extract` first**:
+If the document has a URL, **always try `browser_navigate` first**:
 
 ```
-web_extract(urls=["https://arxiv.org/pdf/2402.03300"])
-web_extract(urls=["https://example.com/report.pdf"])
+browser_navigate(url="https://arxiv.org/pdf/2402.03300")
+# then extract with browser_console or browser_snapshot
+browser_navigate(url="https://example.com/report.pdf")
 ```
 
-This handles PDF-to-markdown conversion via Firecrawl with no local dependencies.
+This handles PDF-to-content conversion with no local dependencies.
 
-Only use local extraction when: the file is local, web_extract fails, or you need batch processing.
+Only use local extraction when: the file is local, browser_navigate fails, or you need batch processing.
 
 ## Step 2: Choose Local Extractor
 
@@ -51,7 +52,7 @@ Only use local extraction when: the file is local, web_extract fails, or you nee
 **Decision**: Use pymupdf unless you need OCR, equations, forms, or complex layout analysis.
 
 If the user needs marker capabilities but the system lacks ~5GB free disk:
-> "This document needs OCR/advanced extraction (marker-pdf), which requires ~5GB for PyTorch and models. Your system has [X]GB free. Options: free up space, provide a URL so I can use web_extract, or I can try pymupdf which works for text-based PDFs but not scanned documents or equations."
+> "This document needs OCR/advanced extraction (marker-pdf), which requires ~5GB for PyTorch and models. Your system has [X]GB free. Options: free up space, provide a URL so I can use browser_navigate, or I can try pymupdf which works for text-based PDFs but not scanned documents or equations."
 
 ---
 
@@ -113,13 +114,15 @@ marker /path/to/folder --workers 4    # Batch
 
 ```
 # Abstract only (fast)
-web_extract(urls=["https://arxiv.org/abs/2402.03300"])
+browser_navigate(url="https://arxiv.org/abs/2402.03300")
+# then extract via browser_console
 
 # Full paper
-web_extract(urls=["https://arxiv.org/pdf/2402.03300"])
+browser_navigate(url="https://arxiv.org/pdf/2402.03300")
+# or: curl -sL "https://arxiv.org/pdf/ID" | pdftotext -layout - -
 
 # Search
-web_search(query="arxiv GRPO reinforcement learning 2026")
+# Use terminal: curl -s "https://export.arxiv.org/api/query?search_query=all:GRPO+reinforcement+learning&max_results=5&sortBy=submittedDate&sortOrder=descending"
 ```
 
 ## Split, Merge & Search
@@ -162,7 +165,7 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 
 ## Notes
 
-- `web_extract` is always first choice for URLs
+- `browser_navigate` is always first choice for URLs
 - pymupdf is the safe default — instant, no models, works everywhere
 - marker-pdf is for OCR, scanned docs, equations, complex layouts — install only when needed
 - Both helper scripts accept `--help` for full usage

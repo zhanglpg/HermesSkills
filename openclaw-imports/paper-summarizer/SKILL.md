@@ -16,15 +16,15 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
      pdftotext -layout paper.pdf -  # outputs to stdout
      ```
      Papers are typically 100K–150K chars; read in ~15K-char chunks via `execute_code` with `subprocess.run(['pdftotext', '-layout', 'paper.pdf', '-'], capture_output=True, text=True)` then slice `text[0:15000]`, `text[15000:30000]`, etc. Five to six chunks covers most papers. This reliably extracts full content including equations, tables, and algorithm boxes.
-   - Blog post / web article: use `web_fetch`
-   - PDF URL: use the `pdf` tool directly
+   - Blog post / web article: use `browser_navigate` + `browser_console` to fetch and extract text
+   - PDF URL: use `browser_navigate` to the PDF URL, or use `terminal` with `curl` + `pdftotext`
    - GitHub repo (library/framework): navigate to the repo's README and any linked docs/papers. Some important work (e.g., DeepEP) is released as open-source code with a detailed README rather than a traditional paper — treat the README + any technical blog post as the primary source.
-   - Title only: search for it first with `web_search`, then fetch the best result
+   - Title only: search for it first via `terminal` with `curl` to arXiv API or search engine, then fetch the best result
    - **Ambiguous/misremembered titles:** If the user gives an acronym + descriptor that doesn't match (e.g., "LACE latent attention" when the paper is actually "LACE: Lattice Attention"), search arXiv by title acronym only (`ti:LACE`) with `sortBy=submittedDate&sortOrder=descending` — this reliably surfaces recent papers by acronym. The user's descriptor word (e.g., "latent") may be a misremembering of a similar-sounding word (e.g., "lattice"). Don't get stuck searching for the exact phrase the user provided.
-   - **Blog post + HN/community discussion:** When the user provides both an article and its discussion thread, treat them as a combined source. Fetch the article normally (delegate_task or web_fetch). For HN discussions, use the Algolia API via `mcp_terminal` heredoc — do NOT delegate HN scraping to subagents (they hallucinate wrong threads). The digest should synthesize both the author argument AND the community debate (camps, counterarguments, representative quotes). See HN extraction technique below.
+   - **Blog post + HN/community discussion:** When the user provides both an article and its discussion thread, treat them as a combined source. Fetch the article normally (delegate_task or browser_navigate + browser_console). For HN discussions, use the Algolia API via `terminal` heredoc — do NOT delegate HN scraping to subagents (they hallucinate wrong threads). The digest should synthesize both the author argument AND the community debate (camps, counterarguments, representative quotes). See HN extraction technique below.
 
    **HN discussion extraction (via terminal heredoc):**
-   Use `mcp_terminal` with `python3 << PYEOF` to fetch `https://hn.algolia.com/api/v1/items/<ID>`. Parse with `urllib.request` + `json.loads(resp.read().decode())`. Sort top-level comments by total descendant count (recursive `count_all` helper) to surface the hottest threads. Print top 15 threads with 3 replies each. **Why heredoc not execute_code:** Algolia returns large JSON (>50KB for 300+ comment threads); `execute_code` terminal() helper truncates stdout causing JSON parse failures mid-JSON.
+   Use `terminal` with `python3 << 'PYEOF'` to fetch `https://hn.algolia.com/api/v1/items/<ID>`. Parse with `urllib.request` + `json.loads(resp.read().decode())`. Sort top-level comments by total descendant count (recursive `count_all` helper) to surface the hottest threads. Print top 15 threads with 3 replies each. **Why heredoc not execute_code:** Algolia returns large JSON (>50KB for 300+ comment threads); `execute_code` terminal() helper truncates stdout causing JSON parse failures mid-JSON.
 
    **arXiv HTML extraction technique (preferred):**
    ```javascript
@@ -184,18 +184,18 @@ Key finding: HuggingFace API (`/api/models/`) returns the full `config.json` wit
 ### execute_code read_file caching can destroy files
 When execute_code calls read_file() on a file already read in the conversation, it may return a cached message like "File unchanged since last read..." instead of actual content. If you then call write_file() with the parsed result, you overwrite the real file with the cache message. This destroyed the Disaggregation Thesis essay in session 2025-04-11 — recovered only because it was published to a GitHub Gist.
 
-**Prevention:** Never use execute_code's write_file on vault files that were read earlier in the conversation. Use mcp_terminal with Python heredoc for read-modify-write operations on already-read files.
+**Prevention:** Never use execute_code's write_file on vault files that were read earlier in the conversation. Use terminal with Python heredoc for read-modify-write operations on already-read files.
 
 ### mcp_patch tool fails on wikilinks
 The patch tool's find-and-replace breaks with "too many values to unpack" when old_string or new_string contains double-bracket wikilink syntax. This affects ALL Obsidian vault files. The skill_manage patch action has the same bug.
 
-**Workaround:** Use mcp_terminal with python3 heredoc for any file edits involving wikilink-containing text. Read the file, do string replacement in Python, write it back.
+**Workaround:** Use terminal with python3 heredoc for any file edits involving wikilink-containing text. Read the file, do string replacement in Python, write it back.
 
 ### Published essays: always republish after editing
 If the essay frontmatter has a published: URL, run `gh gist edit <gist_id> <file_path>` after ANY edit. Check for this in frontmatter before finishing.
 
 ### HN discussion extraction belongs in terminal, not delegate_task
-Subagents tasked with fetching HN threads via Algolia API hallucinated wrong thread content (returned a completely different HN discussion). Always fetch HN threads yourself using mcp_terminal with python3 heredoc and the Algolia items API. Sort comments by descendant count to surface hottest threads.
+Subagents tasked with fetching HN threads via Algolia API hallucinated wrong thread content (returned a completely different HN discussion). Always fetch HN threads yourself using terminal with python3 heredoc and the Algolia items API. Sort comments by descendant count to surface hottest threads.
 
 ## Reading backlog mode
 

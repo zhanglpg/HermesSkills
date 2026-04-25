@@ -174,6 +174,8 @@ hermes cron pause/resume ID Control job state
 hermes cron run ID          Trigger on next tick
 hermes cron remove ID       Delete a job
 hermes cron status          Scheduler status
+
+**Pitfall — cron `script` path:** The `script` field is resolved relative to `~/.hermes/scripts/` automatically. Use just the filename (e.g. `morning-briefing.py`), NOT `scripts/morning-briefing.py` — the latter doubles to `scripts/scripts/morning-briefing.py` and fails with "Script not found."
 ```
 
 ### Webhooks
@@ -313,7 +315,7 @@ Type these during an interactive chat session.
 ```
 ~/.hermes/config.yaml       Main configuration
 ~/.hermes/.env              API keys and secrets
-~/.hermes/skills/           Installed skills
+$HERMES_HOME/skills/        Installed skills
 ~/.hermes/sessions/         Session transcripts
 ~/.hermes/logs/             Gateway and error logs
 ~/.hermes/auth.json         OAuth tokens and credential pools
@@ -338,7 +340,6 @@ Edit with `hermes config edit` or `hermes config set section.key value`.
 | `memory` | `memory_enabled`, `user_profile_enabled`, `provider` |
 | `security` | `tirith_enabled`, `website_blocklist` |
 | `delegation` | `model`, `provider`, `base_url`, `api_key`, `max_iterations` (50), `reasoning_effort` |
-| `smart_model_routing` | `enabled`, `cheap_model` |
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
 
 Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
@@ -351,8 +352,8 @@ Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/con
 |----------|------|-------------|
 | OpenRouter | API key | `OPENROUTER_API_KEY` |
 | Anthropic | API key | `ANTHROPIC_API_KEY` |
-| Nous Portal | OAuth | `hermes login --provider nous` |
-| OpenAI Codex | OAuth | `hermes login --provider openai-codex` |
+| Nous Portal | OAuth | `hermes auth` |
+| OpenAI Codex | OAuth | `hermes auth` |
 | GitHub Copilot | Token | `COPILOT_GITHUB_TOKEN` |
 | Google Gemini | API key | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |
 | DeepSeek | API key | `DEEPSEEK_API_KEY` |
@@ -650,9 +651,9 @@ registry.register(
 )
 ```
 
-**2. Add import** in `model_tools.py` → `_discover_tools()` list.
+**2. Add to `toolsets.py`** → `_HERMES_CORE_TOOLS` list.
 
-**3. Add to `toolsets.py`** → `_HERMES_CORE_TOOLS` list.
+Auto-discovery: any `tools/*.py` file with a top-level `registry.register()` call is imported automatically — no manual list needed.
 
 All handlers must return JSON strings. Use `get_hermes_home()` for paths, never hardcode `~/.hermes`.
 

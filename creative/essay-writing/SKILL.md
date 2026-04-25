@@ -240,6 +240,24 @@ workspace/essays/<slug>/
   diagrams/         — Excalidraw diagrams (if created)
 ```
 
+## Obsidian Frontmatter Rules
+
+Obsidian's YAML parser is stricter than standard YAML. Essays saved to the Obsidian vault must follow these rules:
+
+- **Tags must be YAML list format**, not inline arrays:
+  ```yaml
+  # WRONG — Obsidian won't parse this
+  tags: [ai-infrastructure, tpu, google]
+  
+  # CORRECT
+  tags:
+    - ai-infrastructure
+    - tpu
+    - google
+  ```
+- **No `[[wikilinks]]` in frontmatter.** Wikilinks are an Obsidian markdown extension, not valid YAML. If you need concept links, use them in the body text only.
+- **Remove empty/placeholder keys.** Don't leave `published:` with no value — either omit it or fill it in.
+
 ## Guidelines for the Writer
 
 - **Lead with the interesting part.** Don't warm up. The first paragraph should make the reader want the second.

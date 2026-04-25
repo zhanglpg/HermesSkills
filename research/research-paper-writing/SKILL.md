@@ -22,6 +22,7 @@ End-to-end pipeline for producing publication-ready ML/AI research papers target
 
 This is **not a linear pipeline** — it is an iterative loop. Results trigger new experiments. Reviews trigger new analysis. The agent must handle these feedback loops.
 
+<!-- ascii-guard-ignore -->
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    RESEARCH PAPER PIPELINE                  │
@@ -41,6 +42,7 @@ This is **not a linear pipeline** — it is an iterative loop. Results trigger n
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
+<!-- ascii-guard-ignore-end -->
 
 ---
 
@@ -246,15 +248,16 @@ find . -name "*.bib"
 
 **Load the `arxiv` skill** for structured paper discovery: `skill_view("arxiv")`. It provides arXiv REST API search, Semantic Scholar citation graphs, author profiles, and BibTeX generation.
 
-Use `web_search` for broad discovery, `web_extract` for fetching specific papers:
+Use `browser_navigate` + `browser_console` for broad discovery, and for fetching specific papers:
 
 ```
-# Via web_search:
-web_search("[main technique] + [application domain] site:arxiv.org")
-web_search("[baseline method] comparison ICML NeurIPS 2024")
+# Broad discovery (via browser to search engine or arXiv):
+browser_navigate(url="https://arxiv.org/search/?query=<main+technique>+<application+domain>&searchtype=all")
+browser_navigate(url="https://scholar.google.com/scholar?q=<baseline+method>+comparison")
 
-# Via web_extract (for specific papers):
-web_extract("https://arxiv.org/abs/2303.17651")
+# Fetch specific papers (via browser):
+browser_navigate(url="https://arxiv.org/abs/2303.17651")
+# then extract content via browser_console
 ```
 
 Additional search queries to try:
@@ -2139,8 +2142,8 @@ Compose this skill with other Hermes skills for specific phases:
 | **`process`** | Background experiment management: `process("start", ...)`, `process("poll", pid)`, `process("log", pid)`, `process("kill", pid)` |
 | **`execute_code`** | Run Python for citation verification, statistical analysis, data aggregation. Has tool access via RPC. |
 | **`read_file`** / **`write_file`** / **`patch`** | Paper editing, experiment scripts, result files. Use `patch` for targeted edits to large .tex files. |
-| **`web_search`** | Literature discovery: `web_search("transformer attention mechanism 2024")` |
-| **`web_extract`** | Fetch paper content, verify citations: `web_extract("https://arxiv.org/abs/2303.17651")` |
+| **`web_search`** | Literature discovery: `browser_navigate(url="https://arxiv.org/search/?query=transformer+attention+mechanism+2024")` |
+| **`web_extract`** | Fetch paper content, verify citations: `browser_navigate(url="https://arxiv.org/abs/2303.17651")` then browser_console |
 | **`delegate_task`** | **Parallel section drafting** — spawn isolated subagents for each section. Also for concurrent citation verification. |
 | **`todo`** | Primary state tracker across sessions. Update after every phase transition. |
 | **`memory`** | Persist key decisions across sessions: contribution framing, venue choice, reviewer feedback. |
@@ -2166,7 +2169,7 @@ delegate_task("Draft the Methods section based on these experiment scripts and c
   Include: pseudocode, all hyperparameters, architectural details sufficient for 
   reproduction. Write in LaTeX using the neurips2025 template conventions.")
 
-delegate_task("Draft the Related Work section. Use web_search and web_extract to 
+delegate_task("Draft the Related Work section. Use browser_navigate and browser_console to 
   find papers. Verify every citation via Semantic Scholar. Group by methodology.")
 
 delegate_task("Draft the Experiments section. Read all result files in results/. 

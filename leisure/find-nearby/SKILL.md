@@ -57,13 +57,13 @@ python3 SKILL_DIR/scripts/find_nearby.py --near "90210" --type pharmacy --json
 
 3. **Run the script** with appropriate flags. Use `--json` if you need to process results programmatically.
 
-4. **Present results** with names, distances, and Google Maps links. If the user asked about hours or "open now," check the `hours` field in results — if missing or unclear, verify with `web_search`.
+4. **Present results** with names, distances, and Google Maps links. If the user asked about hours or "open now," check the `hours` field in results — if missing or unclear, verify with `browser_navigate` to look up business info.
 
 5. **For directions**, use the `directions_url` from results, or construct: `https://www.google.com/maps/dir/?api=1&origin=<LAT>,<LON>&destination=<LAT>,<LON>`
 
 ## Tips
 
 - If results are sparse, widen the radius (1500 → 3000m)
-- For "open now" requests: check the `hours` field in results, cross-reference with `web_search` for accuracy since OSM hours aren't always complete
+- For "open now" requests: check the `hours` field in results, cross-reference with `browser_navigate` for accuracy since OSM hours aren't always complete
 - Zip codes alone can be ambiguous globally — prompt the user for country/state if results look wrong
 - The script uses OpenStreetMap data which is community-maintained; coverage varies by region

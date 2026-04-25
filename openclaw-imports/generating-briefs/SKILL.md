@@ -38,6 +38,21 @@ python3 ~/.hermes/skills/openclaw-imports/generating-briefs/scripts/fetch_prices
 
 Parse the JSON output and use these exact prices and change percentages in the Market Snapshot table. Do NOT estimate or use stale data from web searches. The script output is authoritative for price data.
 
+### Step 2.6: Pre-run Script Failure Recovery (Portfolio only)
+
+If the pre-run data-collection script (e.g., `investment-brief-data.py`) times out or fails, **do not abandon the brief**. Proceed with manual recovery:
+
+1. **Run `fetch_prices.py` directly** to get the latest prices:
+   ```bash
+   python3 ~/.hermes/skills/openclaw-imports/generating-briefs/scripts/fetch_prices.py
+   ```
+2. **Read `brief_data.json`** as fallback for both technical data and prices:
+   ```bash
+   ~/.openbb_platform/data/brief_data.json
+   ```
+   This file contains SMA signals, volatility, drawdowns, correlations, valuation metrics, macro indicators, and SEC filing activity. It may also contain cached prices if the fetch script failed.
+3. **Proceed to Step 3** (content gathering). The brief can still be generated with full quantitative data even when the automated pipeline breaks.
+
 ### Step 3: Gather Content
 
 Fetch content from ALL configured sources. **Use browser tools directly** — they are far more reliable than delegating to subagents for web fetching (subagents often lack web tools or hallucinate data).
@@ -60,6 +75,10 @@ Fetch content from ALL configured sources. **Use browser tools directly** — th
 - **Twitter/X is completely inaccessible** — no x-cli available, nitter.net is dead (empty page), xcancel.com has bot detection. Skip the Twitter/X section entirely rather than wasting time on workarounds.
 - **browser_console JS must use IIFE wrapper** — `return` at top level causes `SyntaxError: Illegal return statement`. Always wrap JS in `(() => { ... })()`.
 - **arXiv doesn't update on weekends** — if running on Saturday/Sunday/Monday, the listings will be from the previous Friday. The page heading shows the exact listing date; always check it for freshness filtering.
+- **CNBC Markets (`cnbc.com/markets/`) is a reliable fallback for index data** — when Bloomberg, FT, and other premium sources are blocked by bot detection, CNBC's markets page loads reliably and provides S&P 500, NASDAQ, DJIA, VIX, and top movers.
+- **Yahoo Finance (`finance.yahoo.com/news/`) provides reliable futures data** — even when its news stories fail to load ("We're unable to load stories right now"), the sidebar reliably shows S&P/Dow/Nasdaq futures, VIX, gold, crude oil, and Bitcoin prices.
+- **MarketWatch and Reuters often return empty pages via browser** — `marketwatch.com/investing` and `reuters.com/markets/` frequently load as empty snapshots in headless environments. Do not rely on them as primary sources; use RSS or direct article URLs instead.
+- **Seeking Alpha has aggressive bot detection** — `seekingalpha.com` blocks headless browsers with "Access to this page has been denied." Use RSS feeds or cached data instead.
 
 #### Hacker News (most reliable source)
 Navigate to `https://news.ycombinator.com/front?day=YYYY-MM-DD` (yesterday's date UTC) for scored/ranked stories. Use JS console extraction:
