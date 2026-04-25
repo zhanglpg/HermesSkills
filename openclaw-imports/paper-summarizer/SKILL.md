@@ -41,6 +41,8 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
    ```
    First call with just `keys` to see all sections, then a second call selecting the sections you need (intro, method, results, discussion, conclusion). Two JS calls typically captures an entire paper.
 
+   **⚠️ Pitfall — `browser_console` variable persistence:** JavaScript variables declared with `const`/`let` in `browser_console` persist across calls within the same browser session. Running the same extraction script twice will fail with `SyntaxError: Identifier 'sections' has already been declared`. **Fix:** Use unique variable names per call (e.g., `sections` → `secs`, `secs2`) or wrap in an IIFE: `(() => { const s = {}; ... return JSON.stringify(s); })()`. This is especially important when extracting large papers that need 2+ `browser_console` calls.
+
 2. **Generate the note** using the template in `references/note-template.md`
    - Be substantive — the reader reads deeply, so the summary should too
    - Optional: Only when there is clear correlation, add a "Personal take" section: apply the perspective of engineering culture, complexity, long-termism, AI systems focus, resource constraints, and skepticism of hype to anticipate what would resonate or what he'd push back on
