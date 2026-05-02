@@ -274,6 +274,70 @@ Obsidian's YAML parser is stricter than standard YAML. Essays saved to the Obsid
 - Structural feedback (reorder sections, cut tangents) matters more than surface edits
 - If the same weakness persists across rounds, try a fundamentally different approach rather than incremental fixes
 
+## Deep Review Checklist (applied at Round 3+)
+
+After the essay passes basic review (score 7+), use this checklist to find issues that earlier rounds typically miss. These are patterns discovered empirically across multiple essay review cycles:
+
+1. **Unexamined Assumptions:** Every technical plan has hidden assumptions. Identify the 3-5 most critical ones and add a dedicated section examining each — what must be true for the plan to work, how to verify, and what happens if disproven. This directly addresses the "causal chain is unexamined" critique.
+
+2. **Operational Gaps:** Look for what happens AFTER the core flow. Essays often terminate at "deploy to production" without addressing version management, gradual rollout, rollback criteria, and production monitoring. Add a §X.4 or similar subsection covering the release lifecycle.
+
+3. **Pre-mortem:** Risk analysis sections tend to be generic. A pre-mortem exercise ("imagine the project failed — write down the 5 most likely specific failure modes, their early warning signals, and concrete interventions") produces far more actionable content than a standard risk matrix.
+
+4. **Failure Mode: "Technology works, behavior doesn't change":** The most common automation project failure is not technical — it's adoption. Add behavioral metrics to go/no-go criteria (e.g., "60% of data requests go through the system within 4 weeks").
+
+5. **Buzzword Density:** Count occurrences of key terms. If any term appears >15 times in a single section, replace 2-3 instances with more specific language. The term "闭环" is a common offender in Chinese essays.
+
+6. **Provider-specific Vision API Failures:** If the essay references images or needs image analysis, note that some providers (DeepSeek custom) don't support `image_url` in message content. Use tesseract OCR as fallback (see ocr-and-documents skill).
+
+## Multi-Perspective Review (for executive-facing documents)
+
+For essays that need executive/VP/CEO approval, a single technical review is insufficient. Run reviews from at least two perspectives after the essay passes basic technical review (score 7+):
+
+**Perspective 1: Technical Reviewer** (standard, covered above)
+Scores: thesis, structure, evidence, prose, originality. Focuses on completeness and logical rigor.
+
+**Perspective 2: Executive Reviewer** (for strategic/business documents)
+Use `delegate_task` with a role-playing prompt. The executive reviewer's dimensions are completely different:
+- Strategic alignment — Does this align with the company's actual priorities?
+- Business ROI — Can you trace from technical improvement to revenue/market share?
+- Opportunity cost — What are we NOT funding? Why is this the best use of resources?
+- Ecosystem moat — What's uniquely ours that competitors can't copy?
+- Measurability — What 1-2 outcome metrics should the CEO track?
+- Sustainability — What happens in month 13? Maintenance, tech debt, competitive response?
+
+Example CEO review prompt:
+```
+You are the CEO of [company]. Review this plan strictly from an executive perspective.
+Do not score on technical merit — score on strategic alignment, business return,
+opportunity cost, organizational readiness, competitive moat, and measurability.
+Write review to review-ceo.md.
+```
+
+In practice, the CEO review consistently surfaces issues the technical review missed — ecosystem data being treated as an afterthought instead of the core moat, 5 process metrics when the CEO only needs 2 outcome metrics, and no analysis of what happens after the 12-month plan ends.
+
+## Executive-Facing Document Patterns
+
+When writing documents for executive approval, include these elements that are typically absent from technical documents:
+
+1. **Executive Summary (1 page max):** Answer six questions — what problem, why now, why us, what resources, how to measure success, what's the most likely failure mode. The CEO should not need to read 1000 lines to make a decision.
+
+2. **Opportunity Cost Analysis:** The most important section for executives. A table comparing the proposed approach against 3-4 alternative uses of the same resources, with explicit "why not choose this" reasoning for each alternative.
+
+3. **Two CEO Metrics Only:** Process metrics (iteration cycles, experiment throughput, eval time) are for internal team management. The CEO needs 1-2 outcome metrics — a specific benchmark improvement rate and effective experiment verification time. If those don't improve, nothing else matters.
+
+4. **Go/No-Go with Behavioral Metrics:** Technical go/no-go isn't enough. Add behavioral adoption criteria (e.g., "60% of data requests go through the system within 4 weeks of delivery"). Technology working doesn't mean adoption happened.
+
+5. **Quarterly Termination Clause:** "If both CEO metrics show no improvement for two consecutive quarters, the project enters restructuring or termination review."
+
+## Essay Trimming Strategy
+
+When an essay needs aggressive shortening (cutting 50%+), preserve these sections and cut everything else:
+- **Keep:** Executive summary, opportunity cost analysis, ecosystem differentiator, pre-mortem, CEO metrics, sustainability plan
+- **Cut:** Lengthy capability mapping tables, verbose pipeline descriptions, obvious explanatory text ("it is important to note that..."), technical detail that doesn't differentiate the strategic argument
+
+Target: ~400 lines for an executive-facing plan; ~600 lines for a detailed technical plan.
+
 ## Configuration
 
 | Setting | Default | Notes |
