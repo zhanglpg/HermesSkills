@@ -15,6 +15,26 @@ Strip AI-generated writing tics from essays, papers, and prose. This skill provi
 
 ## The Pattern Catalog
 
+### Category 0: Chinese AI-isms (中文 AI 写作痕迹)
+
+The English-focused regex patterns below won't catch these. Scan manually for Chinese text after the automated pass. The #1 offender:
+
+**"不是...而是..." / "不是...是..." / "不应该...应该..."** — The most common Chinese AI rhetorical crutch. AI models love false-contrast framing in Chinese just as in English. Before fixing, distinguish:
+
+- **Genuine substantive contrast (keep):** The reader holds a specific wrong belief and you need to explicitly correct it. Example: "根因不是数据没打通，数据打通不会自动解决组织分歧" — this rebuts a real assumption.
+- **Decorative contrast (cut):** Just state the point directly. Example: "不是只报原始数据，而是计算成本收益" → "Agent 的输出附带成本、收益、投入估算，不报原始数据。"
+
+Other common Chinese AI-isms to scan for:
+| Pattern | Fix |
+|---------|-----|
+| "其中的关键在于" | Delete, start the sentence after |
+| "本质上" | Delete — state what it is |
+| "需要指出的是" / "值得注意的是" | Delete |
+| "毋庸置疑" / "毫无疑问" | Delete — if true, evidence speaks |
+| "我们可以清晰地看到" | Delete — just show it |
+| Triple "不是X，不是Y，是Z" | Classic AI conclusion pattern. Rewrite as positive statement. |
+| "胜负手不是...不是...是..." | Rewrite as: "胜负手只有一个：[point]" |
+
 ### Category 1: Hedging Filler
 
 Phrases that add nothing. Delete them or rewrite the sentence without them.
@@ -147,9 +167,26 @@ Draft → Review → Revise → **De-AI pass** → Publish
 
 When used with the `essay-writing` skill, run de-AI after the reviewer cycle completes.
 
+## Chinese-Specific AI Patterns
+
+The detection script only handles English. For Chinese text, manually search for these patterns:
+
+| Pattern | Example | Fix |
+|---------|---------|-----|
+| "不是...而是..." | "这不是信息问题，而是组织问题" | If substantive contrast, keep. If decorative, state the point directly. |
+| "本质上" | "这本质上是一次变革" | Delete — say what it is, not what it "essentially is" |
+| "关键的是" / "重要的是" | — | Delete |
+| "需要指出的是" / "值得注意的是" | — | Delete |
+| "不仅仅...更是..." | — | Usually decorative, rewrite |
+| "已在...中体现" / "如前述" | — | Self-referential scaffolding. Delete — just state the point. |
+| 对称对仗句式（"X 有效的场景...X 帮不上忙的场景..."） | — | Break the symmetry — rewrite as natural question-answer or single paragraph. |
+| 粗体+破折号+多从句长跑句（单句 100+ 字） | — | Split into 2-3 shorter sentences. Each sentence makes one point. |
+
+**Detection**: `grep -nE "(不是.*而是|本质上|关键的是|需要指出|值得注意的是|不仅仅.*更是|已在.*体现)" file.md`
+
 ## What NOT to Remove
 
 - **Technical precision**: "significantly different (p < 0.05)" — the adverb is doing real work here.
-- **Genuine contrast**: "Unlike prior work which assumes X, we relax this to Y" — the contrast is substantive.
+- **Genuine contrast**: "Unlike prior work which assumes X, we relax this to Y" — the contrast is substantive. In Chinese: "不是信息问题，是组织问题" when genuinely rebutting a common assumption.
 - **Field-standard phrases**: "We propose", "Our contributions are", "Related work" — these are conventions, not AI tics.
 - **Hedging with epistemic purpose**: "This may indicate..." when you genuinely aren't sure.

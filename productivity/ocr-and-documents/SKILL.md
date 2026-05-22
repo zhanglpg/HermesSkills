@@ -172,3 +172,53 @@ No extra dependencies needed — pymupdf covers split, merge, search, and text e
 - marker-pdf downloads ~2.5GB of models to `~/.cache/huggingface/` on first use
 - For Word docs: `pip install python-docx` (better than OCR — parses actual structure)
 - For PowerPoint: see the `powerpoint` skill (uses python-pptx)
+
+## Tesseract OCR: Image-to-Text Fallback
+
+**When to use:** The user sends a photo (whiteboard, screenshot, handwritten notes) and the vision API fails. This happens on providers that don't support `image_url` in message content (e.g., DeepSeek-v4-pro on custom providers). The error looks like:
+
+```
+unknown variant `image_url`, expected `text`
+```
+
+**One-time setup:**
+```bash
+brew install tesseract tesseract-lang   # includes chi_sim, jpn, etc.
+pip install pytesseract Pillow
+```
+
+**Workflow:**
+
+1. **Resize the image first** — large images produce worse OCR:
+   ```bash
+   sips -Z 1200 input.jpg --out /tmp/resized.jpg
+   ```
+
+2. **Run OCR with appropriate languages:**
+   ```bash
+   # Chinese + English (whiteboard/notes in Chinese)
+   tesseract /tmp/resized.jpg /tmp/ocr_out -l chi_sim+eng
+
+   # English only
+   tesseract image.jpg /tmp/ocr_out -l eng
+
+   # List available: tesseract --list-langs
+   ```
+
+3. **Read the result:**
+   ```bash
+   cat /tmp/ocr_out.txt
+   ```
+
+**Pitfalls:**
+- **OCR quality is mediocre for handwriting** — printed text works well; cursive/whiteboard handwriting may produce garbled characters. Accept that partial extraction is better than none. Parse the output for recognizable Chinese/English fragments and reconstruct meaning from context.
+- **Image resolution matters** — use `sips -Z 1200` (macOS) to resize before OCR. The original dimensions are often too large for tesseract's resolution estimator.
+- **Mixed-language documents need both language packs** — `-l chi_sim+eng` enables both simultaneously. For Japanese add `-l jpn+eng`, etc.
+- **`tesseract-lang` is separate from `tesseract`** — just `brew install tesseract` only gives English. The full language pack is ~685MB.
+- **Pillow may need separate install** — `pip install Pillow` before `pytesseract` if the auto-dependency fails.
+
+**When NOT to use tesseract:**
+- Remote PDFs → use `browser_navigate` first
+- Local text-based PDFs → use pymupdf
+- Scanned PDFs needing high quality → use marker-pdf
+- The vision API works → just use `vision_analyze` or `browser_vision`

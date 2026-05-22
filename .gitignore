@@ -10,3 +10,7 @@ htmlcov/
 *.db-shm
 *.db-wal
 *.db-journal
+.curator_backups/
+.curator_state
+.usage.json
+.usage.json.lock

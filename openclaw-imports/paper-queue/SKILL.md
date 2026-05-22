@@ -91,6 +91,19 @@ When adding many papers at once (e.g., a recommended reading list), use `execute
 ### Conference papers not on arXiv
 Some important systems papers (Orca/OSDI, vLLM/SOSP) have arXiv preprints but the IDs may not match. For conference papers, prefer `--manual` with the USENIX/ACM URL rather than guessing arXiv IDs.
 
+### Manual entries with wrong metadata
+Manual entries (`source: manual`) often have approximate or misremembered titles, wrong years, and missing URLs. When you discover the real paper:
+
+1. **Search by system/acronym name, not title.** The queue title may say "SystemName: A Tetromino-Inspired Scheduling for Heterogeneous MoE (2025)" when the real paper is "Inference without Interference: Disaggregate LLM Inference (2024)" — but both share the system name "SystemName." Search `all:SystemName` on arXiv, not `ti:` with the full queue title.
+2. **Use direct SQLite to fix metadata.** The `paper_queue.py` CLI has no update-metadata command. Connect to the DB directly:
+   ```python
+   import sqlite3
+   conn = sqlite3.connect("~/.hermes/skills/openclaw-imports/paper-queue/.paper_queue/queue.db")
+   conn.execute("UPDATE papers SET url=?, arxiv_id=?, authors=?, title=?, source='arxiv', status='digested' WHERE id=?", ...)
+   conn.commit()
+   ```
+3. **Update all fields**: url, arxiv_id (set to the correct ID), authors, title (use the actual paper title, optionally appending the system name in parens), source (change from `manual` to `arxiv`).
+
 ## Commands Reference
 
 | Command | Description |

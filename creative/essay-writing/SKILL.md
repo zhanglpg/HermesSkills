@@ -219,9 +219,33 @@ When essays are published to GitHub Gist:
 
 1. **Publish:** `gh gist create "<filename>.md" --desc "<title>" --public`
 2. **Add URL to frontmatter:** Add `published: <gist_url>` to the essay's YAML frontmatter immediately after publishing
-3. **Republish on every update:** Whenever an essay with a `published:` field is modified, always republish: `gh gist edit <gist_id> "<filepath>"`
-4. Extract the gist ID from the URL (last path segment) for the edit command
-5. **Author byline:** Include "assisted by [agent name] ([model])" next to the author name. Format: `**Liping Zhang, assisted by Hermes Agent (GLM-5.1) | Date**`. Use the actual model currently running -- don't assume Claude.
+3. **Republish on every update:** Whenever an essay with a `published:` field is modified, always republish. Use `gh gist edit` with the local file path — it replaces the Gist content cleanly:
+
+```bash
+gh gist edit <gist_id> <path_to_updated_file>
+```
+
+This replaces the Gist file with the local file content (verified working May 2026). The `gh gist edit <id> <file>` form does NOT append — it replaces. No TERM issues.
+
+**Alternative (if gh gist edit fails):** Use the GitHub API directly via `gh api`:
+
+```python
+import json
+from hermes_tools import terminal
+content = terminal(f"cat {filepath}")["output"]
+payload = json.dumps({
+    "description": "Updated",
+    "files": {"original-filename.md": {"content": content}}
+})
+terminal(f"gh api -X PATCH /gists/{gist_id} --input - <<'EOF'\n{payload}\nEOF")
+```
+
+Pitfalls:
+- The `files` key in the API payload must use the **existing filename** in the gist, not the local filename
+- `gh gist edit` with `-f` flag + stdin redirection fails with "TERM environment variable not set" — but `gh gist edit <id> <file>` (no `-f`) works
+
+4. Extract the gist ID from the URL (last path segment)
+5. **Author byline:** Format: `*Liping Zhang, assisted by Hermes Agent ([model]) | Date*`. Use the actual model currently running.
 
 This is mandatory — every essay update must be followed by a republish if it has a `published:` URL.
 
@@ -337,6 +361,16 @@ When an essay needs aggressive shortening (cutting 50%+), preserve these section
 - **Cut:** Lengthy capability mapping tables, verbose pipeline descriptions, obvious explanatory text ("it is important to note that..."), technical detail that doesn't differentiate the strategic argument
 
 Target: ~400 lines for an executive-facing plan; ~600 lines for a detailed technical plan.
+
+## Domain Correction Iteration (from user, not reviewer)
+
+When the user provides highly specific domain knowledge corrections during iteration — org structure, metrics definitions, technical architectures, team dynamics — these are more valuable than any reviewer agent feedback. Key patterns:
+
+- **Small corrections (1-2 sections):** Use targeted `patch()` calls
+- **Medium corrections (3-5 sections):** Batch multiple patches, but verify the file didn't get corrupted (check `wc -c` after)
+- **Large corrections (5+ sections or full restructure):** Do a single `write_file()` with the full rewritten content. Accumulating 10+ patches is error-prone and has corrupted files in practice — the string replacements in `execute_code` are not atomic and a single failed match silently drops content.
+
+**After rewriting, always verify:** `wc -c <file>` to confirm the output is proportional to expected size. A 20K-word plan should be ~13-20KB. If the file is 156 bytes, it got corrupted and needs immediate recovery.
 
 ## Configuration
 

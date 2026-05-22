@@ -61,6 +61,14 @@ echo "
 New content here." >> "$VAULT/Existing Note.md"
 ```
 
+## Delete a note
+
+**Pitfall:** `obsidian-cli delete` removes the file but does **NOT** clean up backlinks (unlike `move`, which updates links). Use the `obsidian-note-removal` skill for safe deletion with full backlink cleanup.
+
+```bash
+obsidian-cli delete "Path/To/Note Name"
+```
+
 ## Wikilinks
 
 Obsidian links notes with `[[Note Name]]` syntax. When creating notes, use these to link related content.
