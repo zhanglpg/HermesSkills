@@ -3,11 +3,11 @@
 Usage: python3 rss_batch.py
 Output: Per-feed summary + JSON to stdout.
 """
+import json
+import ssl
 import urllib.request
 import xml.etree.ElementTree as ET
-import ssl
-import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 # === CONFIGURE: Copy feeds from config JSON ===
 FEEDS = [

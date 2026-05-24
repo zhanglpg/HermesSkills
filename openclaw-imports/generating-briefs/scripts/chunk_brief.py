@@ -7,7 +7,7 @@ Each chunk is self-contained markdown under 1850 chars.
 Tables split across chunks get header row prepended to continuation chunks.
 No code fences — raw markdown renders properly in Discord.
 """
-import sys, re
+import sys
 
 path = sys.argv[1] if len(sys.argv) > 1 else '/tmp/full_brief.md'
 with open(path) as f:
