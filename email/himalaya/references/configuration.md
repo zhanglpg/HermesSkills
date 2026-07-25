@@ -44,20 +44,30 @@ folder.aliases.trash = "Trash"
 backend.auth.raw = "your-password"
 ```
 
-### Password from command (recommended)
+### macOS Keychain (recommended for macOS)
+
+Store password once, retrieve on-demand via `auth.cmd`:
+
+```bash
+# One-time storage
+security add-generic-password -a "you@gmail.com" -s "himalaya-gmail" -w "xxxx xxxx xxxx xxxx"
+
+# To rotate password
+security delete-generic-password -a "you@gmail.com" -s "himalaya-gmail"
+security add-generic-password -a "you@gmail.com" -s "himalaya-gmail" -w "new-password"
+```
+
+Then in config.toml:
+
+```toml
+backend.auth.cmd = "security find-generic-password -a you@gmail.com -s himalaya-gmail -w"
+```
+
+### Password from command (Linux/other)
 
 ```toml
 backend.auth.cmd = "pass show email/imap"
-# backend.auth.cmd = "security find-generic-password -a user@example.com -s imap -w"
 ```
-
-### System keyring (requires keyring feature)
-
-```toml
-backend.auth.keyring = "imap-example"
-```
-
-Then run `himalaya account configure <account>` to store the password.
 
 ## Gmail Configuration
 
@@ -73,7 +83,7 @@ backend.port = 993
 backend.encryption.type = "tls"
 backend.login = "you@gmail.com"
 backend.auth.type = "password"
-backend.auth.cmd = "pass show google/app-password"
+backend.auth.cmd = "security find-generic-password -a you@gmail.com -s himalaya-gmail -w"
 
 message.send.backend.type = "smtp"
 message.send.backend.host = "smtp.gmail.com"
@@ -81,7 +91,7 @@ message.send.backend.port = 587
 message.send.backend.encryption.type = "start-tls"
 message.send.backend.login = "you@gmail.com"
 message.send.backend.auth.type = "password"
-message.send.backend.auth.cmd = "pass show google/app-password"
+message.send.backend.auth.cmd = "security find-generic-password -a you@gmail.com -s himalaya-gmail -w"
 
 # Gmail folder mapping. Without these, save-to-Sent fails after
 # SMTP delivery succeeds (Gmail's Sent folder is `[Gmail]/Sent Mail`,

@@ -546,6 +546,30 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 - **Config changes:** In gateway: `/restart`. In CLI: exit and relaunch.
 - **Code changes:** Restart the CLI or gateway process
 
+### Terminal: every command fails with "cd: No such file or directory" (exit 126)
+
+**Symptom:** ALL terminal commands fail immediately — even `bash --norc --noprofile -c 'echo hello'` — with:
+```
+/bin/bash: line 1: cd: /Users/.../old-path: No such file or directory
+exit code: 126
+```
+
+**This is NOT a bashrc issue.** The Hermes terminal wrapper injects a `cd` to `TERMINAL_CWD` before every command (`tools/environments/base.py` line 446: `builtin cd -- {cwd} || exit 126`). When `TERMINAL_CWD` points to a deleted directory, all commands fail.
+
+**Root cause chain:**
+1. `MESSAGING_CWD` in `~/.hermes/.env` points to a deleted/migrated path (common after OpenClaw migration)
+2. Gateway bridges `MESSAGING_CWD` → `TERMINAL_CWD` env var on startup (gateway/run.py ~line 910)
+3. Terminal tool reads `TERMINAL_CWD` and `cd`s there before every command
+
+**Fix:**
+1. Check: `grep 'TERMINAL_CWD\|MESSAGING_CWD' ~/.hermes/.env`
+2. If `MESSAGING_CWD` points to a nonexistent path, update it: `sed -i '' 's|MESSAGING_CWD=.*|MESSAGING_CWD=$HOME|' ~/.hermes/.env`
+3. Restart the gateway: `hermes gateway restart`
+
+**Diagnostic technique when terminal is dead:** Use `execute_code` (Python, not bash) to inspect `os.environ` and fix the `.env` file — it bypasses the broken terminal wrapper.
+
+Full code traces and reproduction: `references/stale-terminal-cwd.md`
+
 ### Skills not showing
 1. `hermes skills list` — verify installed
 2. `hermes skills config` — check platform enablement

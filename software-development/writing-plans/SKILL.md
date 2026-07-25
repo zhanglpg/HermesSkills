@@ -270,6 +270,31 @@ git commit -m "type: description"
 **Bad:** "Create the model file"
 **Good:** "Create: `src/models/user.py`"
 
+## Plan-Only Mode (from former `plan` skill)
+
+When the user activates plan-only mode (via `/plan` slash command or explicit request like "just give me a plan, don't execute"), restrict your behavior:
+
+- **Do not implement code.** Do not edit project files except the plan markdown file.
+- **Do not run mutating terminal commands, commit, push, or perform external actions.**
+- You may inspect the repo or other context with read-only commands/tools when needed.
+- Your deliverable is a markdown plan saved inside the active workspace under `.hermes/plans/`.
+
+### Save Location
+
+Save the plan with `write_file` under:
+- `.hermes/plans/YYYY-MM-DD_HHMMSS-<slug>.md`
+
+Treat that as relative to the active working directory / backend workspace. Hermes file tools are backend-aware, so using this relative path keeps the plan with the workspace on local, docker, ssh, modal, and daytona backends.
+
+If the runtime provides a specific target path, use that exact path. If not, create a sensible timestamped filename yourself under `.hermes/plans/`.
+
+### Interaction Style
+
+- If the request is clear enough, write the plan directly.
+- If no explicit instruction accompanies `/plan`, infer the task from the current conversation context.
+- If it is genuinely underspecified, ask a brief clarifying question instead of guessing.
+- After saving the plan, reply briefly with what you planned and the saved path.
+
 ## Execution Handoff
 
 After saving the plan, offer the execution approach:

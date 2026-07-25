@@ -91,6 +91,21 @@ When adding many papers at once (e.g., a recommended reading list), use `execute
 ### Conference papers not on arXiv
 Some important systems papers (Orca/OSDI, vLLM/SOSP) have arXiv preprints but the IDs may not match. For conference papers, prefer `--manual` with the USENIX/ACM URL rather than guessing arXiv IDs.
 
+### `list` truncates titles and omits URLs
+The `list` command output truncates long titles and does not show `url` or `arxiv_id`. When you need full details (e.g., to recommend a paper to the user), query SQLite directly:
+
+```python
+import sqlite3, os
+db = os.path.expanduser("~/.hermes/skills/openclaw-imports/paper-queue/.paper_queue/queue.db")
+conn = sqlite3.connect(db)
+row = conn.execute("SELECT id, title, url, arxiv_id, authors, priority_score, abstract FROM papers WHERE id=?", (111,)).fetchone()
+```
+
+**Column name is `priority_score`, NOT `score`.** The CLI displays it as "Score" but the DB column is `priority_score`.
+
+### `suggest` command can fail with URL encoding error
+The `suggest` subcommand may crash with `URL can't contain control characters` due to unencoded spaces in the arXiv API query string. If this happens, suggestions can be obtained by querying arXiv API manually with proper URL encoding, or by using the `list --topic` filter instead.
+
 ### Manual entries with wrong metadata
 Manual entries (`source: manual`) often have approximate or misremembered titles, wrong years, and missing URLs. When you discover the real paper:
 

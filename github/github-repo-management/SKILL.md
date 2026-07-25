@@ -241,6 +241,88 @@ for r in json.load(sys.stdin)['items']:
     print(f\"  {r['full_name']:40}  ★{r['stargazers_count']:6}  {r['description'][:60] if r['description'] else ''}\")"
 ```
 
+## 4b. Codebase Analysis with pygount
+
+Get lines-of-code counts, language breakdowns, file counts, and code-vs-comment ratios for any local repo using [pygount](https://pypi.org/project/pygount/).
+
+### Prerequisites
+
+```bash
+pip install pygount
+```
+
+### Basic Summary (Most Common)
+
+Get a full language breakdown with file counts, code lines, and comment lines:
+
+```bash
+cd /path/to/repo
+pygount --format=summary \
+  --folders-to-skip=".git,node_modules,venv,.venv,__pycache__,.cache,dist,build,.next,.tox,.eggs,*.egg-info" \
+  .
+```
+
+**IMPORTANT:** Always use `--folders-to-skip` to exclude dependency/build directories. Without it, pygount crawls everything and may hang on large dependency trees.
+
+### Skip Lists by Project Type
+
+```bash
+# Python projects
+--folders-to-skip=".git,venv,.venv,__pycache__,.cache,dist,build,.tox,.eggs,.mypy_cache"
+
+# JavaScript/TypeScript projects
+--folders-to-skip=".git,node_modules,dist,build,.next,.cache,.turbo,coverage"
+
+# General catch-all
+--folders-to-skip=".git,node_modules,venv,.venv,__pycache__,.cache,dist,build,.next,.tox,vendor,third_party"
+```
+
+### Filter by Language
+
+```bash
+# Only count Python
+pygount --suffix=py --format=summary .
+
+# Python and YAML
+pygount --suffix=py,yaml,yml --format=summary .
+```
+
+### Detailed Per-File Output
+
+```bash
+# Default format shows per-file breakdown
+pygount --folders-to-skip=".git,node_modules,venv" .
+
+# Sort by code lines
+pygount --folders-to-skip=".git,node_modules,venv" . | sort -t$'\t' -k1 -nr | head -20
+```
+
+### Output Formats
+
+```bash
+pygount --format=summary .      # Summary table (recommended)
+pygount --format=json .         # JSON for programmatic use
+```
+
+### Interpreting Results
+
+| Column | Meaning |
+|--------|---------|
+| **Language** | Detected programming language |
+| **Files** | Number of files |
+| **Code** | Lines of executable/declarative code |
+| **Comment** | Comment or documentation lines |
+| **%** | Percentage of total |
+
+Special pseudo-languages: `__empty__` (empty files), `__binary__` (images/compiled), `__generated__` (auto-generated), `__duplicate__` (identical content), `__unknown__` (unrecognized types).
+
+### Pitfalls
+
+- **Always exclude .git, node_modules, venv** — without `--folders-to-skip`, pygount may take minutes or hang.
+- **Markdown shows 0 code lines** — pygount classifies all Markdown content as comments.
+- **JSON files show low code counts** — pygount may count JSON lines conservatively.
+- **Large monorepos** — use `--suffix` to target specific languages.
+
 ## 5. Repository Settings
 
 **With gh:**
@@ -500,6 +582,11 @@ for g in json.load(sys.stdin):
     files = ', '.join(g['files'].keys())
     print(f\"  {g['id']}  {g['description'] or '(no desc)':40}  {files}\")"
 ```
+
+## References
+
+- `references/github-api-cheatsheet.md` — API endpoint reference
+- `references/github-pages-deploy.md` — CDN caching pitfalls, single-file React pattern for GitHub Pages
 
 ## Quick Reference Table
 

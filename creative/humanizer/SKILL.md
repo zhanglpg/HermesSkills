@@ -478,6 +478,51 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 
 ---
 
+## CHINESE-SPECIFIC AI PATTERNS
+
+The regex-based detection in this skill targets English prose. For Chinese text, manually scan for these patterns after the English-targeted pass. The `scripts/detect.py` script supplements manual review.
+
+### The #1 Offender: "不是...而是..." (False-Contrast Framing)
+
+AI models love false-contrast framing in Chinese just as in English. Before fixing, distinguish:
+
+- **Genuine substantive contrast (keep):** The reader holds a specific wrong belief and you need to explicitly correct it. Example: "根因不是数据没打通，数据打通不会自动解决组织分歧" — this rebuts a real assumption.
+- **Decorative contrast (cut):** Just state the point directly. Example: "不是只报原始数据，而是计算成本收益" → "Agent 的输出附带成本、收益、投入估算，不报原始数据。"
+
+### Common Chinese AI-isms
+
+| Pattern | Fix |
+|---------|-----|
+| "其中的关键在于" | Delete, start the sentence after |
+| "本质上" | Delete — state what it is |
+| "需要指出的是" / "值得注意的是" | Delete |
+| "毋庸置疑" / "毫无疑问" | Delete — if true, evidence speaks |
+| "我们可以清晰地看到" | Delete — just show it |
+| Triple "不是X，不是Y，是Z" | Classic AI conclusion pattern. Rewrite as positive statement. |
+| "胜负手不是...不是...是..." | Rewrite as: "胜负手只有一个：[point]" |
+| "不仅仅...更是..." | Usually decorative, rewrite |
+| "已在...中体现" / "如前述" | Self-referential scaffolding. Delete — just state the point. |
+| 对称对仗句式 | Break the symmetry — rewrite as natural question-answer or single paragraph. |
+| 粗体+破折号+多从句长跑句（单句 100+ 字） | Split into 2-3 shorter sentences. Each sentence makes one point. |
+
+### Quick grep for Chinese AI-isms
+
+```bash
+grep -nE "(不是.*而是|本质上|关键的是|需要指出|值得注意的是|不仅仅.*更是|已在.*体现)" file.md
+```
+
+## Automated Detection Script
+
+This skill bundles `scripts/detect.py` from the former `de-ai` skill. It flags English AI patterns (hedging filler, formulaic transitions, not-X-but-Y crutches, excessive adverbs, grandiose framing, and structural tics):
+
+```bash
+python3 ~/.hermes/skills/creative/humanizer/scripts/detect.py <file.md>
+python3 ~/.hermes/skills/creative/humanizer/scripts/detect.py <file.md> --json    # machine-readable
+python3 ~/.hermes/skills/creative/humanizer/scripts/detect.py <file.md> --stats   # summary counts only
+```
+
+---
+
 ## Process
 
 1. Read the input text carefully (use `read_file` if it's a file).

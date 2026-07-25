@@ -5,7 +5,9 @@ description: "Summarizes academic papers, articles, blog posts, and essays, then
 
 # Paper Summarizer
 
-Fetch, read, and summarize a paper or article, then save a structured note to Obsidian.
+Fetch, read, and summarize **a single paper or article**, then save a structured note to Obsidian.
+
+**When NOT to use this skill:** If the task is to produce a curated brief covering multiple papers (e.g., a weekly top-N roundup, a daily paper digest), the `generating-briefs` skill is the right fit — it uses browser-based arXiv scanning and lightweight summaries rather than the deep single-paper Obsidian workflow below. This skill is for one-paper-at-a-time, deep reads with Mermaid diagrams, key equations, and wiki integration.
 
 ## Workflow
 
@@ -52,6 +54,7 @@ Fetch, read, and summarize a paper or article, then save a structured note to Ob
    - Default path: `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes/gen-notes/digests/<Title>.md`
    - Sanitize the title for use as a filename (remove special chars, keep it readable)
    - If the note already exists, ask before overwriting
+   - **⚠️ Common typo**: the folder is `digests/` (English plural), NOT `digestes/`. Always double-check the path before writing.
 
 4. **Confirm** — tell the user the note was saved and give a one-line headline of the paper's key contribution
 
@@ -112,6 +115,7 @@ Include 1-2 Mermaid diagrams in each digest to visually illustrate the paper's c
 **Mermaid pitfalls:**
 - **No trailing spaces after subgraph declarations.** `subgraph Foo["Label"]    ` (with trailing spaces) causes a parse error: `Expecting 'SEMI', 'NEWLINE', 'EOF', got 'SPACE'`. Always ensure subgraph lines have no trailing whitespace.
 - **No blank lines inside subgraph blocks** — some Mermaid renderers treat them as block terminators.
+- **Use `<br/>` for line breaks in node labels, NOT `\n`.** Mermaid does not interpret `\n` as a newline — it renders literally as backslash-n. Always use `<br/>` (or `<br>`) for multi-line text inside `["..."]` node labels.
 
 ## Key Equations
 

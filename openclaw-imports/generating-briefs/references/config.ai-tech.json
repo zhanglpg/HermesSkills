@@ -1,5 +1,6 @@
 {
   "_comment": "AI Tech Brief Configuration. Source list for the briefs skill.",
+  "_feed_notes": "Updated Jun 22, 2026: TLDR AI URL fixed (308 redirect resolved). Ben's Bites and Interconnects removed (404). The Neuron kept (verify periodically).",
 
   "arxiv_categories": ["cs.LG", "cs.AI", "cs.SE"],
 
@@ -11,11 +12,9 @@
 
   "rss_sources": [
     {"name": "Import AI",    "rss": "https://jack-clark.net/feed/",              "category": "newsletter"},
-    {"name": "TLDR AI",      "rss": "https://tldr.tech/rss",                     "category": "newsletter"},
+    {"name": "TLDR AI",      "rss": "https://tldr.tech/feed/ai",                  "category": "newsletter"},
     {"name": "Latent Space", "rss": "https://latentspace.blog/rss",              "category": "newsletter"},
-    {"name": "Ben's Bites",  "rss": "https://bensbites.beehiiv.com/rss",         "category": "newsletter"},
     {"name": "The Neuron",   "rss": "https://theneuron.beehiiv.com/rss",         "category": "newsletter"},
-    {"name": "Interconnects","rss": "https://interconnects.ai/rss",              "category": "newsletter"},
     {"name": "Anthropic",    "rss": "https://www.anthropic.com/news?format=rss", "category": "ai_lab"},
     {"name": "OpenAI",       "rss": "https://openai.com/news/rss",               "category": "ai_lab"},
     {"name": "Hugging Face",          "rss": "https://huggingface.co/blog/feed.xml",            "category": "research_org"},
@@ -32,6 +31,8 @@
     {"name": "Google DeepMind",            "url": "https://deepmind.google/discover/blog",            "category": "ai_lab"},
     {"name": "Meta AI",                    "url": "https://ai.meta.com/blog",                         "category": "ai_lab"},
     {"name": "LMSYS",                      "url": "https://lmsys.org/blog",                           "category": "research_org"},
+    {"name": "Ben's Bites",                "url": "https://bensbites.com",                            "category": "newsletter"},
+    {"name": "Interconnects",              "url": "https://www.interconnects.ai",                     "category": "newsletter"},
     {"name": "Matthew Berman",             "url": "https://www.youtube.com/@matthew_berman",          "category": "youtube"},
     {"name": "Two Minute Papers",          "url": "https://www.youtube.com/@TwoMinutePapers",         "category": "youtube"},
     {"name": "Yannic Kilcher",             "url": "https://www.youtube.com/@YannicKilcher",           "category": "youtube"},

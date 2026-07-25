@@ -228,5 +228,17 @@ Even with correct frontmatter, the extract-only command may hang (likely during 
 ### Agent-primary workflow is more reliable
 Instead of letting `ingest` run end-to-end (which makes sequential Gemini calls), prefer: (1) `ingest <path> --extract-only` to get metadata, (2) create/update concept and name pages yourself or via subagent delegation, (3) run `index` to rebuild. This avoids timeouts and gives you control over page quality.
 
+### Subagent wikilink hallucination
+
+When delegating concept/name page creation or updates to subagents, they frequently invent wikilink names that don't match actual digest filenames (e.g., `[[MiniMax-M2 Technical Report]]` instead of `[[MiniMax-M2]]`). This creates broken wikilinks.
+
+**Prevention:** In the subagent's `context`, always include the **exact digest filename** (without `.md` extension) for use in wikilinks, e.g.:
+
+```
+The source digest filename is 'MiniMax-M2' — use [[MiniMax-M2]] (NOT [[MiniMax-M2 Technical Report]]) for all wikilinks to this digest.
+```
+
+After all subagents complete, verify the critical wikilinks by reading the updated files. Run `python3 scripts/wiki_manager.py fix-links scan` to catch any broken links.
+
 ### Timeout budget
 If using the full ingest pipeline, set `timeout=600+`. With 3 concepts + 5 names, expect 5-10 minutes of sequential Gemini CLI calls.

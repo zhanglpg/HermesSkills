@@ -1,45 +1,53 @@
 #!/usr/bin/env python3
-"""Batch RSS fetcher for brief generation. Reference skeleton — copy feed URLs from config JSON.
-Usage: python3 rss_batch.py
-Output: Per-feed summary + JSON to stdout.
-"""
-import json
-import ssl
-import urllib.request
-import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta, timezone
+"""Batch fetch all RSS/Atom feeds in parallel. Reads feed list from stdin or config.
+Run: python3 scripts/rss_batch.py                              (uses default feeds)
+Or:   echo '[{"name":"X","url":"..."}]' | python3 scripts/rss_batch.py  (custom feeds)
+Or:   cat config.json | jq '.rss_sources | map({name:.name, url:.rss})' | python3 scripts/rss_batch.py
 
-# === CONFIGURE: Copy feeds from config JSON ===
-FEEDS = [
-    # {"name": "CNBC Top News", "url": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114"},
-    # {"name": "MarketWatch", "url": "http://feeds.marketwatch.com/marketwatch/topstories/"},
-    # ... add more from config
+IMPORTANT: In background/cron mode, stdin may not be a tty but also may have no valid JSON.
+The script handles this gracefully — if stdin JSON parsing fails, it falls back to defaults.
+"""
+import urllib.request
+import ssl
+import json
+import sys
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+
+# Default AI tech brief feeds (kept current as of Jun 2026)
+DEFAULT_FEEDS = [
+    {"name": "Import AI",      "url": "https://jack-clark.net/feed/"},
+    {"name": "TLDR AI",        "url": "https://tldr.tech/feed/ai"},
+    {"name": "Latent Space",   "url": "https://latentspace.blog/rss"},
+    {"name": "The Neuron",     "url": "https://theneuron.beehiiv.com/rss"},
+    {"name": "Anthropic",      "url": "https://www.anthropic.com/news?format=rss"},
+    {"name": "OpenAI",         "url": "https://openai.com/news/rss"},
+    {"name": "Hugging Face",   "url": "https://huggingface.co/blog/feed.xml"},
+    {"name": "Simon Willison", "url": "https://simonwillison.net/atom/everything/"},
+    # NOTE: Ben's Bites (bensbites.beehiiv.com/rss) and Interconnects (interconnects.ai/rss)
+    # both return 404 as of Jun 2026 — removed from defaults. Re-add when URLs are confirmed.
 ]
 
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
 
-cutoff = datetime.now(timezone.utc) - timedelta(hours=36)
-NS_ATOM = "http://www.w3.org/2005/Atom"
-
-
-def parse_date(text):
-    """Try multiple date formats, return timezone-aware datetime or None."""
-    if not text:
+def parse_date(date_str):
+    """Parse various date formats to timezone-aware datetime."""
+    if not date_str:
         return None
-    text = text.strip()
+    date_str = date_str.strip()
     formats = [
-        "%a, %d %b %Y %H:%M:%S %z",
-        "%a, %d %b %Y %H:%M:%S %Z",
-        "%Y-%m-%dT%H:%M:%S%z",
-        "%Y-%m-%dT%H:%M:%S.%f%z",
-        "%Y-%m-%dT%H:%M:%SZ",
-        "%Y-%m-%dT%H:%M:%S+00:00",
+        '%a, %d %b %Y %H:%M:%S %z',     # RFC 2822
+        '%Y-%m-%dT%H:%M:%S%z',           # ISO 8601 with tz
+        '%Y-%m-%dT%H:%M:%S.%f%z',
+        '%Y-%m-%dT%H:%M:%SZ',            # ISO 8601 UTC
+        '%Y-%m-%dT%H:%M:%S.%fZ',
+        '%Y-%m-%d %H:%M:%S',
+        '%a, %d %b %Y %H:%M:%S %Z',
     ]
     for fmt in formats:
         try:
-            dt = datetime.strptime(text, fmt)
+            dt = datetime.strptime(date_str, fmt)
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             return dt
@@ -48,93 +56,97 @@ def parse_date(text):
     return None
 
 
-results = []
-
-for feed in FEEDS:
+def fetch_feed(name, url, cutoff_days=2):
+    """Fetch and parse a single RSS/Atom feed.
+    
+    IMPORTANT: Uses urlopen() directly with context= kwarg, NOT opener.open().
+    The build_opener() pattern is incompatible with SSL context passing.
+    """
     try:
-        req = urllib.request.Request(
-            feed["url"], headers={"User-Agent": "Mozilla/5.0"}
-        )
-        with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
-            raw = resp.read()
+        gcontext = ssl.SSLContext()
+        gcontext.check_hostname = False
+        gcontext.verify_mode = ssl.CERT_NONE
 
-        root = ET.fromstring(raw)
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        resp = urllib.request.urlopen(req, timeout=15, context=gcontext)
+        content = resp.read()
 
+        root = ET.fromstring(content)
+        is_atom = root.tag.endswith('}feed') or root.tag == 'feed'
         items = []
-        is_atom = root.tag == f"{{{NS_ATOM}}}feed"
+        cutoff = datetime.now(timezone.utc) - timedelta(days=cutoff_days)
 
         if is_atom:
-            for entry in root.findall(f".//{{{NS_ATOM}}}entry"):
-                title_el = entry.find(f"{{{NS_ATOM}}}title")
-                link_el = entry.find(f"{{{NS_ATOM}}}link")
-                updated_el = entry.find(f"{{{NS_ATOM}}}updated")
-                summary_el = entry.find(f"{{{NS_ATOM}}}summary")
+            entries = root.findall('{http://www.w3.org/2005/Atom}entry')
+            for entry in entries[:10]:
+                title_el = entry.find('{http://www.w3.org/2005/Atom}title')
+                link_el = entry.find('{http://www.w3.org/2005/Atom}link')
+                updated_el = entry.find('{http://www.w3.org/2005/Atom}updated')
+                summary_el = entry.find('{http://www.w3.org/2005/Atom}summary')
 
-                title = title_el.text if title_el is not None else ""
-                link = link_el.get("href") if link_el is not None else ""
-                updated = updated_el.text if updated_el is not None else ""
-                summary = summary_el.text if summary_el is not None else ""
+                title = title_el.text.strip() if title_el is not None and title_el.text else ""
+                link = link_el.get('href', '') if link_el is not None else ""
+                updated = parse_date(updated_el.text) if updated_el is not None and updated_el.text else None
+                summary = summary_el.text.strip()[:300] if summary_el is not None and summary_el.text else ""
 
-                dt = parse_date(updated)
-
+                if updated and updated < cutoff:
+                    continue
                 items.append({
                     "title": title,
                     "link": link,
-                    "date": updated,
-                    "summary": (summary[:200] if summary else ""),
-                    "fresh": dt is not None and dt > cutoff,
+                    "date": str(updated),
+                    "summary": summary
                 })
         else:
-            for item in root.findall(".//item"):
-                title_el = item.find("title")
-                link_el = item.find("link")
-                date_el = item.find("pubDate")
-                desc_el = item.find("description")
+            for item in root.findall('.//item')[:10]:
+                title = item.findtext('title', '').strip()
+                link = item.findtext('link', '').strip()
+                pubdate = item.findtext('pubDate', '')
+                desc = item.findtext('description', '').strip()[:300]
 
-                title = title_el.text if title_el is not None else ""
-                link = link_el.text if link_el is not None else ""
-                date_str = date_el.text if date_el is not None else ""
-                desc = desc_el.text if desc_el is not None else ""
-
-                dt = parse_date(date_str)
-
+                dt = parse_date(pubdate) if pubdate else None
+                if dt and dt < cutoff:
+                    continue
                 items.append({
                     "title": title,
                     "link": link,
-                    "date": date_str,
-                    "summary": (desc[:200] if desc else ""),
-                    "fresh": dt is not None and dt > cutoff,
+                    "date": str(dt),
+                    "summary": desc
                 })
 
-        fresh = [i for i in items if i["fresh"]]
-        results.append({
-            "name": feed["name"],
-            "status": "ok",
-            "total": len(items),
-            "fresh": len(fresh),
-            "items": fresh,
-        })
+        return {"name": name, "status": "ok", "items": items}
     except Exception as e:
-        results.append({
-            "name": feed["name"],
-            "status": "error",
-            "error": str(e)[:150],
-        })
+        err = str(e)[:200]
+        return {"name": name, "status": "error", "error": err, "items": []}
 
-# Print final summary
-for r in results:
-    if r["status"] == "ok":
-        print(f"\n{'=' * 60}")
-        print(f"SOURCE: {r['name']} — {r['fresh']}/{r['total']} fresh items")
-        print(f"{'=' * 60}")
-        for item in r["items"][:8]:
-            print(f"  [{item.get('date', '?')[:25]}] {item['title']}")
-            print(f"    {item['link']}")
-            if item.get("summary"):
-                s = item["summary"].replace("\n", " ").strip()[:150]
-                print(f"    {s}")
-    else:
-        print(f"\nSOURCE: {r['name']} — ERROR: {r.get('error', 'unknown')[:120]}")
 
-print("\n\n--- JSON OUTPUT ---")
-print(json.dumps(results, ensure_ascii=False, default=str))
+def load_feeds():
+    """Load feeds from stdin JSON, falling back to defaults on any parse error.
+    
+    Handles both 'url' and 'rss' keys in feed dicts (config.ai-tech.json uses 'rss').
+    """
+    if not sys.stdin.isatty():
+        try:
+            raw = sys.stdin.read()
+            if raw.strip():
+                feeds = json.loads(raw)
+                # Normalize key: config uses 'rss', script uses 'url'
+                for f in feeds:
+                    if 'url' not in f and 'rss' in f:
+                        f['url'] = f['rss']
+                return feeds
+        except (json.JSONDecodeError, ValueError, TypeError):
+            pass  # Fall through to defaults
+    return DEFAULT_FEEDS
+
+
+if __name__ == '__main__':
+    feeds = load_feeds()
+    results = {}
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(fetch_feed, f["name"], f["url"]): f["name"] for f in feeds}
+        for future in as_completed(futures):
+            result = future.result()
+            results[result["name"]] = result
+
+    print(json.dumps(results, indent=2))

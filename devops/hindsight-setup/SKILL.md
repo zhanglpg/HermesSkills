@@ -29,51 +29,81 @@ curl -s http://localhost:9177/health
 
 ## Configuration
 
-### ⚠️ CRITICAL: Hermes plugin manages the env file — do NOT edit it directly
+### ⚠️ CRITICAL: There are TWO config files. Edit the right one.
 
-Hermes's Hindsight memory plugin (`plugins/memory/hindsight/__init__.py`, function `_materialize_embedded_profile_env`) **overwrites** `~/.hindsight/profiles/hermes.env` every time Hermes starts. Any manual edits to this file will be silently reverted.
+The runtime source of truth is **`~/.hermes/hindsight/config.json`** — NOT `~/.hermes/config.yaml`. The plugin's `_load_config()` reads from `config.json` only; the `memory:` section of `config.yaml` is consumed *once* at initial setup (`hermes config memory hindsight`, function `post_setup`) and then written into `config.json`. After that, edits to `config.yaml`'s memory section have **no effect** until you re-run setup.
 
-**The correct configuration flow:**
+**Actual configuration flow:**
 
 ```
-config.yaml (memory section)     ~/.hermes/.env
-       │                              │
-       ├─ llm_provider                ├─ HINDSIGHT_LLM_API_KEY
-       ├─ llm_model                   └─ HINDSIGHT_IDLE_TIMEOUT
-       └─ llm_base_url
-              │
-              ▼
-  _materialize_embedded_profile_env()
-              │
-              ▼
-  ~/.hindsight/profiles/hermes.env   ← AUTO-GENERATED, DO NOT EDIT
+              Initial setup ONLY
+              ────────────────────
+              config.yaml (memory section)
+                       │
+                       ▼
+              post_setup() writes
+                       │
+                       ▼
+       ~/.hermes/hindsight/config.json   ← RUNTIME SOURCE OF TRUTH — edit this
+                       │
+                       │ (every Hermes session)
+                       ▼
+       _materialize_embedded_profile_env()
+            + HINDSIGHT_LLM_API_KEY from ~/.hermes/.env
+                       │
+                       ▼
+       ~/.hindsight/profiles/hermes.env  ← AUTO-GENERATED — don't edit
+                       │
+                       │ (every daemon start)
+                       ▼
+               hindsight-api daemon
 ```
 
-**What Hermes manages** (set in `config.yaml` memory section):
-- `llm_provider` → `HINDSIGHT_API_LLM_PROVIDER` (maps `openai_compatible`/`openrouter` → `openai`)
-- `llm_model` → `HINDSIGHT_API_LLM_MODEL`
-- `llm_base_url` → `HINDSIGHT_API_LLM_BASE_URL`
+**Boot path (no Hermes running):** the launchd agent
+`~/Library/LaunchAgents/com.hindsight.daemon.plist` (`RunAtLoad: true,
+KeepAlive: true`) auto-starts the daemon on login by running
+`~/.hermes/scripts/hindsight-daemon.sh start`. The daemon script just
+sources whatever `~/.hindsight/profiles/hermes.env` is on disk — so for
+the reboot path to work, **the env file must be correct on disk**.
+That's only true if the last Hermes session's regen produced a healthy
+env, which in turn requires `config.json` to be correct.
+
+**To change LLM provider/model durably:** edit
+`~/.hermes/hindsight/config.json` directly, then run
+`bash ~/.hermes/scripts/hindsight-daemon.sh restart` — the daemon script
+doesn't regenerate the env on its own, so also do
+`python3 -c "import sys; sys.path.insert(0,'/Users/<you>/.hermes/hermes-agent');
+from plugins.memory.hindsight import _load_config, _materialize_embedded_profile_env;
+_materialize_embedded_profile_env(_load_config())"` first (this is what
+Hermes' next start would do anyway). API key still comes from
+`~/.hermes/.env` `HINDSIGHT_LLM_API_KEY`, so make sure that env var is
+loaded into your shell (`set -a; source ~/.hermes/.env; set +a`).
+
+**Sample working `~/.hermes/hindsight/config.json` for DeepSeek:**
+```json
+{
+  "mode": "local_embedded",
+  "llm_provider": "openai_compatible",
+  "llm_model": "deepseek-v4-flash",
+  "llm_base_url": "https://api.deepseek.com/v1",
+  "bank_id": "hermes",
+  "recall_budget": "mid",
+  "timeout": 120,
+  "idle_timeout": 300
+}
+```
 
 **What Hermes does NOT manage** (set in daemon script or via `export` before launch):
 - `HINDSIGHT_API_EMBEDDINGS_LOCAL_MODEL` — local embedding model name
 - `HINDSIGHT_API_EMBEDDINGS_PROVIDER` — embedding provider
 - `HINDSIGHT_API_RERANKER_PROVIDER` — reranker provider
 
-**Example config.yaml memory section:**
-```yaml
-memory:
-  provider: hindsight
-  llm_provider: openai_compatible
-  llm_model: deepseek-v4-flash
-  llm_base_url: https://api.deepseek.com/v1
-```
-
-**API key** — set in `~/.hermes/.env` as `HINDSIGHT_LLM_API_KEY=<key>`. The plugin reads this and writes it into the profile env. Never put the key directly in the profile env file — it will be lost on next Hermes restart.
+**API key** — set in `~/.hermes/.env` as `HINDSIGHT_LLM_API_KEY=<key>`. The plugin reads this from `os.environ` (Hermes loads `.env` via `dotenv.load_dotenv`) and writes it into the profile env. Never put the key directly in the profile env file — it will be overwritten on next regen.
 
 ### Env File Location
 `~/.hindsight/profiles/hermes.env`
 
-Generated by Hermes. Read-only from a troubleshooting perspective. Use `config.yaml` + `.env` to make changes.
+Generated by Hermes. Read-only from a troubleshooting perspective. Use `~/.hermes/hindsight/config.json` + `~/.hermes/.env` to make changes.
 
 ### Pattern A: Gemini + Google embeddings (original)
 

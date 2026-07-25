@@ -68,6 +68,24 @@ Key: the agent's prompt must include instructions to **update state.json via wri
 - **Cron runs are stateless** — the agent has no memory of previous runs. All context must come from the script output.
 - **State updates are the agent's responsibility.** If the prompt doesn't explicitly tell it to write state, progress will stall.
 - **Phase transitions** — the script should compute the current phase from the day number, not rely on the agent to figure it out.
+- **Cron delivery may be missed.** If the user directly asks about the program ("问题是什么？", "今晚的提问呢"), assume the cron delivery failed or was overlooked. Don't search for the cron output — go straight to reading `state.json`, generate the current day's questions manually, and continue the conversation live.
+
+## Manual Recovery
+
+When the user prompts for questions outside the cron run (e.g., in chat):
+
+1. **Read state.json** to get current day, phase, and full history.
+2. **Generate 3 questions** contextualized to the phase and the user's previous answers — each question should reference specifics from past responses to show continuity.
+3. **Deliver in-chat** using the same format as the cron job:
+   ```
+   📅 Day N · 阶段：XXX
+
+   Q1. ...
+   Q2. ...
+   Q3. ...
+   ```
+4. **After user answers, save immediately** — add entry to history array with answers_summary, then increment current_day.
+5. **If user asks for another round** ("再继续问一组"), advance the day, generate the next set, and save again after answers.
 
 ## Program References
 

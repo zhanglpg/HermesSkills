@@ -87,6 +87,28 @@ When the user already has a draft (e.g., in Obsidian, a workspace, or a previous
 3. Save outline to `workspace/essays/<slug>/outline.md`
 4. Get user approval before drafting
 
+### Phase 1.5: Pre-Review Technical Verification (for systems essays)
+
+Before sending a systems essay draft to the reviewer, verify **all numerical claims** with a quick Python calculation script. This catches errors that reviewers will flag — a 2-minute verification saves a lost review round.
+
+**What to verify:**
+
+1. **KV cache / memory claims:** Confirm per-token, per-batch, and per-GPU numbers match the stated model architecture (layers, KV heads, head dim, precision). GQA vs MHA matters — wrong head count produces 8× errors.
+2. **Latency / throughput claims:** Verify stated latencies are physically possible given stated hardware (memory bandwidth, FLOPS).
+3. **Model-on-GPU capacity:** Confirm whether the stated model fits on the stated GPU configuration at the stated precision. Tensor parallelism changes per-GPU numbers.
+4. **Paper citations:** Confirm each arXiv ID resolves via `http://export.arxiv.org/api/query?id_list=<id>`. Check that author lists and paper titles match.
+
+**Example verification script (from the KV cache congestion essay):**
+```python
+layers = 80; kv_heads = 8; head_dim = 128; bytes_per = 2  # FP16, GQA
+per_token = 2 * layers * kv_heads * head_dim * bytes_per
+print(f"Per-token KV: {per_token:,} B = {per_token/1024:.0f} KB")
+per_gpu = per_token / 8  # TP=8
+print(f"Per-GPU: {per_gpu/1024:.0f} KB")
+```
+
+**Pattern:** Use `execute_code` with `from hermes_tools import terminal` for the verification script. Print results to stdout. If any number doesn't match, fix the essay before submitting for review.
+
 ### Phase 2: Draft → Review Loop (max 3 rounds)
 
 Each round:
