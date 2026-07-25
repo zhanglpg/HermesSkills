@@ -112,3 +112,26 @@ Verify with `curl -s -o /dev/null -w '%{http_code}' https://zhanglpg.github.io/<
 - Layered ambient bg: 2-3 radial-gradient glows + a faint grid via body::before/::after.
 - Motion: count-up stats, IntersectionObserver scroll reveals, SVG line-draw
   (stroke-dashoffset) and bar-grow animations, hover lift on cards.
+
+## Route-based segments (Strava-style, from lap data only)
+
+COROS lap data has no GPS track, only 1K splits. To get "same route" segment
+bests without a map: cluster outdoor runs by START coordinate (haversine,
+~200m radius). Runs sharing a start follow the same route, so their 1K splits
+are aligned from the start — segment k = best time for the k-th km across all
+efforts on that route. Honest and simple. See `build_route_segments` in
+`coros-dashboard/update.py`. Fetch trail-run laps too (not just flat runs) or
+the most-repeated mountain route is missing.
+
+## Detail modal + mobile patterns
+
+- Detail view: build a labelId->activity index, set a module-level
+  `_openDetail` callback from App via useEffect, and call `openDetail(id)`
+  from any row/card onClick. Modal: Escape-to-close, overlay-click-to-close,
+  lock body scroll while open (restore on unmount).
+- Mobile: bottom-sheet modal on <=640px (`align-items:flex-end`,
+  `border-radius:18px 18px 0 0`), `.table-scroll{overflow-x:auto}` for tables,
+  scrollable tab bar, fluid `clamp()` type, collapse grids at 960/640/400px.
+- Note: `element.click()` from browser_console does NOT reliably fire React
+  synthetic handlers (and module-scoped functions aren't on window). Use the
+  real `browser_click` tool to test interactions; use DOM queries to assert.
