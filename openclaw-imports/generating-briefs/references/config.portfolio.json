@@ -42,8 +42,6 @@
 
   "brief_title": "Daily Portfolio Brief",
 
-  "extra_data_path": "~/.openbb_platform/data/brief_data.json",
-
   "portfolio_holdings": {
     "Tech": ["GOOGL", "NVDA"],
     "Semiconductors": ["NVDA", "TSMC"],
