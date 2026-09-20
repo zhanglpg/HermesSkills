@@ -58,6 +58,7 @@ This replaces the Gist content cleanly (no `-f` flag, no stdin — those hit TER
 ## Pitfalls
 
 - **Don't rewrite the whole file.** Use `patch` for surgical edits. A 60KB file rewritten via `write_file` risks silent corruption; accumulated string replacements in `execute_code` are non-atomic and can drop content.
+- **Frontmatter edits are a corruption hotspot.** Observed failure: a `patch` replacing `published:` → `published: <url>` whose old_string spanned past the line merged the URL into the H1 title and deleted the closing `---`, leaving an unparseable note. When backfilling a frontmatter field, match ONLY the exact single line (e.g. just `published:`), never a range that crosses the closing delimiter. After ANY frontmatter edit, re-read the first ~12 lines and confirm the `---` … `---` block closes and the H1 is intact.
 - **Don't elaborate technical detail from memory.** Verify the paper first (see above). This is the single most common way to introduce a confident error during an editorial pass.
 - **Don't leave redundant Mermaid headers.** When converting a diagram, watch for a subgraph title AND an internal node carrying the same label — remove the internal one.
 - **The Obsidian vault path** is `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/notes/gen-notes/surveys/` (iCloud-synced), NOT `~/notes/gen-notes/`.
