@@ -15,7 +15,7 @@ Liping's curated gallery of model architectures, live at https://zhanglpg.github
 
 ## Workflow: add or update a model
 
-1. **Verify against primary sources only.** A model's HF repo can sit as an "upcoming release" placeholder for weeks — Kimi K3 was skipped in three consecutive weekly runs for exactly this. Do not add a card until a real `config.json` exists. Announcement blogs alone are not enough.
+1. **Verify against primary sources only.** A model's HF repo can sit as an "upcoming release" placeholder for weeks — Kimi K3 was skipped in three consecutive weekly runs for exactly this. Do not add a card until a real `config.json` exists. Announcement blogs alone are not enough. The inverse trap also bites: weights can land in a repo created weeks earlier (Qwen-Image-2.1: repo created Sep 14 as placeholder, weights + blog Sep 20), so a discovery window keyed on `createdAt` misses it — also sweep per-org `lastModified`/trending for tracked-vendor repos and re-check placeholder repos seen in earlier runs.
 2. Research specs (see "Researching specs" below). Cross-check the README summary table against `config.json` values; they occasionally disagree.
 3. Add the entry at the **top** of the `window.MODELS` array (newest first). Full field schema + worked example in `references/entry-schema.md`. Use `patch` anchored on `window.MODELS = [` — not a full-file overwrite of the 1600-line file.
 4. Update `changelog.js`: new entry at top of `entries` (`date`, `added`/`upgraded` id arrays, `note` explaining what and why), bump `last_run` (every run, even no-change runs). Cap at 20 entries.
@@ -55,3 +55,6 @@ Google, DuckDuckGo, and Bing all throw bot challenges from this environment. Go 
 - `confidence` values: `verified` (config.json checked), `partial`, `estimated`. Only mark verified after step 1 passes.
 - MoE entry with undisclosed active params (e.g. LLaDA2.2-flash): set `params_active_B: null` + `confidence: "partial"`; renderer shows "—" and the jsdom label diff expects "— active" verbatim, so all checks pass unchanged. Note the derived estimate in `notes` only.
 - The weekly job also edits these same files — stale-merge risk is real; always `git status` first.
+- Third-party mirrors of gated/preview releases are NOT primary sources: the "Step-5-Preview-BF16" re-uploads (Sep 2026) carried `step3p5v`/`Step4ForCausalLM` configs — wrong architecture for the announced model. If the official repo 401s, skip until official weights land.
+- Vendor blogs can lag HF releases: Xiaomi MiMo-V2.6 (Sep 21) shipped weights + in-repo tech-report PDF with no launch post on mimo.xiaomi.com; repo names carry training-run suffixes (`-RL`). Check HF `createdAt`/index metadata, not the blog, for the release date.
+- `attention_split` for SWA/full hybrids: `pattern_map` chars must map to existing `A_COL` keys (`global` + `sliding` work); put split data in `research/arch-details.json` (merged by build_models.py), not the batch file.
