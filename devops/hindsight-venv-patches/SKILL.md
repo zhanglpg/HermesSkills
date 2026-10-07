@@ -6,28 +6,41 @@ category: devops
 
 # Hindsight Venv Patches — Historical / Fallback
 
-> **As of 2026-05-24 this skill is no longer the primary fix.** The three
-> patches it documented were workarounds for a dependency-version drift
-> between `hindsight-api-slim 0.5.3` and the venv's installed `torch`,
-> `sentence-transformers`, and `numpy`. The root cause is fixed by the
-> pins in `~/.hermes/hermes-agent/pyproject.toml` (`hindsight` and `voice`
-> extras). Keep this file for the symptom→cause map; the fix recipes
-> below are emergency-only fallbacks if upstream regresses.
+> **Update 2026-10-07: the pyproject.toml pin no longer exists.** The
+> `hindsight` extra was REMOVED from hermes-agent core (Hindsight moved to
+> the plugin catalog; see commits "build: remove leftover references to the
+> dropped hindsight extra" / "fix(pm): drop stale Hindsight extra"). The
+> `voice` extra now pins `numpy==2.4.3` unconditionally — which BREAKS
+> torch 2.2.2 on Intel Mac. So every hermes-agent update that touches the
+> venv can re-break the daemon. There is no durable upstream fix anymore;
+> after each update, if recall fails, run the Known-Good Set below.
 
-## TL;DR — what *should* happen now
+## Known-Good Set (Intel Mac, verified 2026-10-07)
 
 ```bash
-# Install only the deps that satisfy the platform constraints in pyproject.
-~/.hermes/hermes-agent/venv/bin/pip3 install -e ~/.hermes/hermes-agent[hindsight,voice]
-# On Intel Mac that pins torch==2.2.2, numpy<2, sentence-transformers>=5.0.
+# Working combo: numpy 1.26.4 + sentence-transformers 5.7.0 + transformers 4.57.6 + torch 2.2.2
+~/.hermes/hermes-agent/venv/bin/pip3 install 'numpy<2' 'sentence-transformers>=5.0,<6' 'transformers>=4.41,<5'
 bash ~/.hermes/scripts/hindsight-daemon.sh restart
 bash ~/.hermes/scripts/hindsight-daemon.sh status   # → healthy
+curl -s http://localhost:9177/health                # → {"status":"healthy","database":"connected"}
 ```
 
-No file patches required. The upstream `hindsight_api/engine/cross_encoder.py`
-and `hindsight_api/engine/embeddings.py` work as-shipped under
-`sentence-transformers>=5.0` (which is what the hindsight code was actually
-written for — 5.x restored `model_kwargs=` as the canonical kwarg name).
+Do NOT install `sentence-transformers>=6` — it pulls `transformers>=5`, whose
+`integrations/accelerate.py` crashes with `NameError: name 'nn' is not defined`
+under torch 2.2.2. The `<6` cap matters.
+
+Pip will warn that `hindsight-api 0.3.0` (a stale leftover dist-info beside
+`hindsight-api-slim 0.5.3`) requires sentence-transformers<3.3 — that warning
+is harmless; the 0.5.3 slim code is what actually runs and it wants >=5.0.
+
+No file patches required with this set. The upstream
+`hindsight_api/engine/cross_encoder.py` and `embeddings.py` work as-shipped
+under `sentence-transformers>=5.0,<6` (5.x restored `model_kwargs=` as the
+canonical kwarg name).
+
+**Data-loss note:** none of these crashes touch stored memories — they are API
+boot failures only. The PostgreSQL data (~/.pg0/instances/hindsight) survives;
+verify with a hindsight_recall after restart instead of assuming loss.
 
 ## Root cause (the part that was missed in the original patches)
 
