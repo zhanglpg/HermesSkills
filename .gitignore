@@ -14,3 +14,7 @@ htmlcov/
 .curator_state
 .usage.json
 .usage.json.lock
+.locks/
+*.db
+__pycache__/
+.DS_Store
