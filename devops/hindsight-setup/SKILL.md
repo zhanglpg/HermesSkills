@@ -20,6 +20,29 @@ Hindsight has two components:
 
 The API server is the important part. The embed CLI is optional — Hermes tools (`hindsight_recall`, `hindsight_retain`, `hindsight_reflect`) call the HTTP API directly.
 
+## Automatic Post-Update Health Check (installed 2026-10-07)
+
+An `on_session_start` shell hook self-heals the daemon after hermes-agent
+updates drift the venv deps:
+
+- Script: `~/.hermes/agent-hooks/hindsight-health.sh`
+- Config: `hooks.on_session_start` in `~/.hermes/config.yaml` (timeout 120)
+- Allowlist entry: `~/.hermes/shell-hooks-allowlist.json` (event+command pair,
+  includes script mtime — editing the script triggers a re-validation warning
+  via `hermes hooks doctor`, re-approve if intentional)
+- Log: `~/.hermes/logs/hindsight-health.log` (rotates at 1MB)
+
+Behavior: fast path is a 5s curl to `/health` — healthy daemon = silent exit
+(~80ms). Unhealthy = mkdir-lock single-flight, read numpy/sentence-transformers/
+transformers versions from the venv, reinstall the known-good set if drifted
+(numpy<2, sentence-transformers>=5,<6, transformers>=4.41,<5 — see
+hindsight-venv-patches skill), `hindsight-daemon.sh restart`, poll health up
+to 90s. Stdout must stay EMPTY (observer hook; any JSON on stdout is parsed
+as a directive). Verify with `hermes hooks list` / `hermes hooks test on_session_start`.
+
+Note: config.yaml `hooks:` cannot be edited with the patch/write_file tools
+(security guard refuses); use `hermes config set hooks.on_session_start '<json>'`.
+
 ## Quick Health Check
 
 ```bash

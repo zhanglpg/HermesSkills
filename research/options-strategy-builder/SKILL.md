@@ -18,6 +18,7 @@ Construct and price options strategies against a share position using live (dela
 3. **Expiration list + historical vol**: `yfinance` (`Ticker.options`, `Ticker.history`). yfinance `option_chain()` bid/ask come back as 0.00 outside market hours — never trust yfinance for option quotes; use it only for expirations and price history.
 
 Pitfalls:
+- CBOE cdn intermittently answers with a 307 redirect HTML page — always fetch with `curl -sL` (follow redirects); a JSONDecodeError starting with `<html>` means you parsed the redirect body.
 - Yahoo `v7/finance/options/*` returns `{"error":{"code":"Unauthorized","description":"Invalid Crumb"}}` — it requires a cookie/crumb dance. Use CBOE instead; do not fight the crumb.
 - yfinance IV field degenerates to near-zero values after hours — garbage, not real IV. Cross-check against CBOE `iv`.
 - Check `date -u` before quoting prices: CBOE/Yahoo delayed data is last-trade-based after hours; label quotes with their timestamp in the output.
@@ -55,3 +56,13 @@ For a recurring report, split numbers from narrative:
 - Hermes cron: `script` param must be a filename under ~/.hermes/scripts/ (absolute paths rejected); use a thin wrapper there that subprocess-runs the repo script. Schedule `25 8 * * *` = daily 8:25 Beijing (US close ~6:25-7:25 CST, so data is settled).
 - Yahoo meta.previousClose is unreliable on some responses (returned 160 for a 343 stock = 2y-ago chartPreviousClose); derive prev close from the closes series instead: pairs[-1] is today's bar (live intraday if market open), pairs[-2] is the prior settled close.
 - Intraday vs settled: Yahoo regularMarketPrice during ET market hours is a LIVE price and the chart's last bar is today's partial bar. Detect (ET weekday 09:30-16:00), label output as intraday, and do NOT record lastQuoteDate for intraday runs — otherwise the evening settled-close refresh gets suppressed by the idempotency check and stale numbers persist until next morning.
+
+## Switching to maintenance mode (user filled a real collar)
+
+When the user reports an actual fill (often at DIFFERENT strikes than recommended — record what they hold, not what you suggested):
+- Add `mode: "maintenance"` + a `live` block to state.json: expiry, put, call, contracts, entryDate, entrySpot, entry_credit. The refresh script must FREEZE these strikes — no re-anchoring, no roll logic against live legs; only monitoring. Screening-mode reanchoring would silently fight the real position.
+- Ask the user for entry fill (net credit/debit per share + entry spot) — without it, option-leg mark-to-market P&L is uncomputable; emit `mtmPnl: null` / "待补录" rather than assuming 0, and guard every format string against None (f-string `:+.2f` on None crashes the whole refresh).
+- Compute and emit live tracking per run: both legs' mid/delta/IV, net delta (1 + putΔ − callΔ, × shares = stock-equivalent exposure), cost-to-close both legs, MTM vs entry credit, trigger lines from LIVE strikes (cap−3% / floor+3%) with % distance, roll-window date (expiry−30d), and a status class: HOLD / NEAR_CAP / CALL_ITM / NEAR_FLOOR / PUT_ITM. Status ≠ HOLD → WARN_LIVE_* flag so the cron agent escalates.
+- Make the recommended-structure candidate (A) track the live strikes so scenario tables, probabilities, payoff chart and CVaR all describe the REAL position; keep B–E as theoretical reference.
+- Rewrite the cron prompt for the new job identity: daily report becomes a maintenance brief (status pill, leg mids, net delta, trigger distances, ⚠️ action lines from the playbook), not a build recommendation. Suppress screening-only flags (e.g. WARN_CREDIT_NEG) in maintenance mode.
+- GitHub Pages CDN serves stale data.js for minutes after push (max-age=600, x-cache HIT) even when raw.githubusercontent.com already shows the new content — verify via raw URL + cache-busting query param and last-modified header; do NOT re-push assuming the deploy failed.
