@@ -20,6 +20,75 @@ Hindsight has two components:
 
 The API server is the important part. The embed CLI is optional — Hermes tools (`hindsight_recall`, `hindsight_retain`, `hindsight_reflect`) call the HTTP API directly.
 
+## LLM Model Choice (updated 2026-10-11)
+
+Use `deepseek-flash` (= DeepSeek V4.1-Flash, released 2026-09-10). The old
+`deepseek-v4-flash` name is RETIRED — DeepSeek temporarily routes it to V4.1-Flash
+as a compat shim, so it still works but should not be relied on. V4.1-Flash
+benchmarks above V4-Pro on agent tasks at lower cost. Set it in BOTH
+`~/.hermes/hindsight/config.json` (`llm_model`) AND `config.yaml`
+(`memory.llm_model` — save via `hermes config set`, the file-write guard blocks
+direct edits), then regenerate the env file and restart the daemon.
+
+When Hindsight uses its LLM (only these paths; plain recall is LLM-free —
+local bge embeddings + BM25 + graph + local cross-encoder rerank):
+- retain -> fact extraction (`retain_extract_facts`), every memory stored
+- consolidation -> background dedup/merge passes
+- reflect -> only on `hindsight_reflect` (multi-step agent, ~5-6 calls each)
+- observation extraction from facts during retain
+The engine supports per-task routing (`retain_llm_*` / `reflect_llm_*` /
+`consolidation_llm_*` env vars); one model for all is fine at low volume.
+
+## Plugin Location Moved (2026-10 update)
+
+The Hindsight memory plugin is NO LONGER in hermes-agent core. It now lives at
+`~/.hermes/plugins/hindsight/` (plugin-catalog migration). The env-regen helper
+moved with it. To regenerate `~/.hindsight/profiles/hermes.env` manually:
+
+```bash
+set -a; source ~/.hermes/.env; set +a
+~/.hermes/hermes-agent/venv/bin/python3 -c "
+import sys
+sys.path.insert(0, '/Users/lipingzhang/.hermes/plugins')      # for hindsight.*
+sys.path.insert(0, '/Users/lipingzhang/.hermes/hermes-agent') # for agent.*
+from hindsight.embedded import _materialize_embedded_profile_env
+import json, os
+cfg = json.load(open(os.path.expanduser('~/.hermes/hindsight/config.json')))
+_materialize_embedded_profile_env(cfg, llm_api_key=os.environ.get('HINDSIGHT_LLM_API_KEY'))
+"
+```
+
+Must use the VENV python (system python3 lacks ruamel/deps) and BOTH sys.path
+entries (embedded.py does relative imports needing the `hindsight` package
+parent, plus `agent.secret_scope` from core). Importing embedded.py directly by
+file path fails on its relative imports.
+
+## Duplicate-Daemon Fight: launchd KeepAlive vs restart script
+
+`~/Library/LaunchAgents/com.hindsight.daemon.plist` has `KeepAlive: true`. If you
+run `hindsight-daemon.sh restart` while launchd is also respawning, two processes
+race for port 9177 — health flaps (empty responses, PID keeps changing) even
+though each individual startup succeeds. Symptom: `lsof -iTCP:9177` shows a
+process but curl gets connection-refused, PID increments every few seconds.
+
+Clean recovery:
+```bash
+launchctl unload ~/Library/LaunchAgents/com.hindsight.daemon.plist  # stop respawn
+bash ~/.hermes/scripts/hindsight-daemon.sh stop
+kill -9 $(lsof -nP -iTCP:9177 -t) 2>/dev/null                        # stragglers
+bash ~/.hermes/scripts/hindsight-daemon.sh start                     # ONE start
+# verify healthy + single PID, THEN:
+launchctl load ~/Library/LaunchAgents/com.hindsight.daemon.plist     # its start no-ops on live PID
+```
+Reloading launchd after a healthy manual start is safe: the plist runs `start`,
+which detects the live PID and no-ops instead of spawning a duplicate.
+
+NOTE: the hermes.log is append-only and huge (~80MB, thousands of historical
+`Application startup failed` lines from past incidents). When diagnosing, always
+check the TIMESTAMP of the last failure vs last success — an old traceback at
+the tail region can be stale. `grep` for `Application startup complete` /
+`Connection verified` timestamps to see the true current state.
+
 ## Automatic Post-Update Health Check (installed 2026-10-07)
 
 An `on_session_start` shell hook self-heals the daemon after hermes-agent
