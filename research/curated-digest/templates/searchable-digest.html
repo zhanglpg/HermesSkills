@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title><style>
+:root{--bg:#f9f9f7;--sf:#fff;--ink:#111;--ink2:#555;--mut:#8a8a85;--bd:#e3e2db;--ac:#1b7f5a;--st:#c98a00}
+@media(prefers-color-scheme:dark){:root{--bg:#0d0d0d;--sf:#1a1a19;--ink:#eee;--ink2:#bbb;--mut:#8a8a85;--bd:#2c2c2a;--ac:#3fbf8f;--st:#e0a92e}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,"PingFang SC",system-ui,sans-serif}
+.w{max-width:880px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:24px;margin:8px 0 4px}h2{font-size:19px;margin:36px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--bd)}
+.sub{color:var(--ink2);font-size:14px}.why{color:var(--ink2);font-size:14px;margin:6px 0 10px}
+.stars{background:rgba(201,138,0,.09);border-left:3px solid var(--st);padding:9px 12px;font-size:13.5px;margin:10px 0;border-radius:0 8px 8px 0}
+input[type=search]{width:100%;padding:11px 13px;font-size:15px;border:1px solid var(--bd);border-radius:9px;background:var(--sf);color:var(--ink);margin:14px 0}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:11px;padding:12px 14px;margin:9px 0}
+.card.star{border-left:3px solid var(--st)}
+.hd{font-weight:600;font-size:15px}.id{color:var(--mut);font-weight:400;font-size:13px;margin-right:6px}
+.pl{color:var(--ink2);font-size:14px;margin-top:4px}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;font-size:11.5px;color:var(--mut)}
+.tag{border:1px solid var(--bd);border-radius:99px;padding:1px 8px}
+.evA{color:var(--ac);font-weight:700;border-color:var(--ac)}.g{color:var(--st);font-weight:700}
+.note{background:rgba(27,127,90,.07);border-left:3px solid var(--ac);padding:11px 13px;border-radius:0 8px 8px 0;margin:12px 0;font-size:14px}
+ol,ul{padding-left:20px}li{margin:5px 0}a{color:var(--ac)}
+.cnt{color:var(--mut);font-size:13px;margin:6px 0}
+</style></head><body><div class="w">
+<h1>{{TITLE}}</h1>
+<p class="sub">{{SOURCE_LINE}}</p>
+<div class="note">{{SELECTION_NOTE}}</div>
+<input type="search" id="q" placeholder="{{SEARCH_PLACEHOLDER}}">
+<div class="cnt" id="cnt"></div>
+
+<!-- Repeat per group:
+<h2>{{GROUP}} <span class="id">（N 条）</span></h2>
+<div class="why">{{WHY_THIS_GROUP}}</div>
+<div class="stars">★ 必读：{{STAR_LIST}}</div>
+<div class="card star" data-t="{{TITLE+SUMMARY for search}}">
+  <div class="hd"><span class="g">★</span> {{ENTRY_TITLE}}</div>
+  <div class="pl">{{PLAIN_SUMMARY}}</div>
+  <div class="meta"><span class="id">{{ch.num}}</span><span class="tag evA">证据 A</span>
+  <span class="tag">钱 0</span><span class="tag">时间 少</span><span class="tag">毅力 些</span><span class="tag">收益 大</span></div>
+</div>
+-->
+
+<h2>我的补充判断</h2><ol>{{JUDGMENTS}}</ol>
+</div><script>
+const q=document.getElementById('q'),cs=[...document.querySelectorAll('.card')],h2=[...document.querySelectorAll('h2')],cnt=document.getElementById('cnt');
+function run(){const v=q.value.trim().toLowerCase();let n=0;
+cs.forEach(c=>{const hit=!v||c.dataset.t.toLowerCase().includes(v);c.style.display=hit?'':'none';if(hit)n++});
+h2.forEach(h=>{let e=h.nextElementSibling,vis=false;
+while(e&&!/^H2$/.test(e.tagName)){if(e.classList&&e.classList.contains('card')&&e.style.display!=='none')vis=true;e=e.nextElementSibling}
+const show=(vis||!v);h.style.display=show?'':'none';
+if(h.nextElementSibling&&h.nextElementSibling.classList.contains('why'))h.nextElementSibling.style.display=h.style.display;
+if(h.nextElementSibling&&h.nextElementSibling.classList.contains('stars'))h.nextElementSibling.style.display=h.style.display;
+});
+cnt.textContent=v?`匹配 ${n} / ${cs.length} 条`:`共 ${cs.length} 条 · 输入关键词筛选`;
+}q.addEventListener('input',run);run();
+</script></body></html>

@@ -28,7 +28,6 @@ tags:
 - **Hotels: comfort and safety first.** For the night before a hard hike, prefer a branded chain (锦江/亚朵-class) over 民宿 — consistent service, secure access, and a dryer/laundry matters after a long day. Check breakfast, parking, and walking distance to dinner.
 - **Fill spare time with local food and nearby sights.** Always include a food list (name the dishes, not just "try local cuisine") and 2–4 low-effort nearby spots slotted into the return-day morning — villages, ancient towns, hot springs, tea/theme towns — ranked by proximity to the route back.
 - **End with an action list ordered by urgency,** with dated deadlines for anything time-sensitive (ticket release, train pre-sale window).
-
 ## Step A: Flight schedule research (regional airports)
 Booking-site APIs (ctrip/umetrip/qunar/trip.com/variflight) are JS-rendered or anti-bot-walled from curl — don't burn many calls probing them. The reliable server-rendered source is **FlightConnections**:
 
@@ -42,6 +41,7 @@ Booking-site APIs (ctrip/umetrip/qunar/trip.com/variflight) are JS-rendered or a
 For domestic trips, rail usually beats flying — and the binding question is how FEW direct trains exist, not how many. See `references/china-rail-data.md` for the source list and recipe.
 
 Cheapest first move: `web_search "<from> <to> 高铁 时刻表 车次"` and read the **search-result snippets** — OTA pages are JS-walled in the browser, but their server-rendered snippet text carries exact 车次/发车/到达/历时/票价 plus transfer options. Then cross-check against a server-rendered timetable site before asserting a time.
+Snippet text concatenates rows of ADJACENT trains, so a dep/arr pair can sit next to the wrong 车次 (an "evening-departure, dawn-arrival sleeper" fragment once belonged to a different train than the number printed beside it). Confirm train identity — number AND both endpoint times AND the via-stops shape — on a full stop-list timetable page before naming a train in the itinerary or building a morning around its arrival.
 
 ## Step B: Chinese scenic-area entry constraints (5A / 景区)
 Pull these from the scenic area's OWN official site or 公众号 (购票须知 / 景区公告) — third-party guide articles and SEO pages routinely carry a different, wrong pre-sale window. When sources conflict, quote the official text verbatim and flag the conflict.
