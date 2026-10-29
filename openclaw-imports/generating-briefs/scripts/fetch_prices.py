@@ -17,7 +17,6 @@ re-executes itself with `uv run --script` using the dependencies declared above.
 import json
 import os
 import shutil
-import subprocess
 import sys
 import warnings
 from datetime import datetime, timezone
@@ -26,8 +25,8 @@ try:
     import yfinance as yf
 except ImportError:
     uv = shutil.which("uv") or next(
-        (p for p in ("/opt/homebrew/bin/uv", os.path.expanduser("~/.local/bin/uv")) if os.path.exists(p)),
-        None)
+        (p for p in ("/opt/homebrew/bin/uv", os.path.expanduser("~/.local/bin/uv")) if os.path.exists(p)), None
+    )
     if not uv or os.environ.get("BRIEF_UV_REEXEC"):
         raise
     env = {k: v for k, v in os.environ.items() if k not in ("VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME")}

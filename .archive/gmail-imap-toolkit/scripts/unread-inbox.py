@@ -4,7 +4,11 @@
 Reads the Gmail app password from the macOS Keychain service used by
 himalaya. Override account/service via GMAIL_ACCOUNT / GMAIL_KEYCHAIN_SERVICE.
 """
-import imaplib, email, os, ssl, subprocess, sys
+import email
+import imaplib
+import os
+import ssl
+import subprocess
 from email.header import decode_header
 from email.utils import parsedate_to_datetime
 

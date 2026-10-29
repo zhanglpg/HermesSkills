@@ -44,9 +44,13 @@ from _common import (  # noqa: E402
 
 # Sampler nodes whose `positive` / `negative` connections we trace
 SAMPLER_NODE_FAMILY = {
-    "KSampler", "KSamplerAdvanced",
-    "SamplerCustom", "SamplerCustomAdvanced",
-    "BasicGuider", "CFGGuider", "DualCFGGuider",
+    "KSampler",
+    "KSamplerAdvanced",
+    "SamplerCustom",
+    "SamplerCustomAdvanced",
+    "BasicGuider",
+    "CFGGuider",
+    "DualCFGGuider",
 }
 
 
@@ -186,14 +190,16 @@ def extract_schema(workflow: dict) -> dict:
                     if any(t_ in meta_title for t_ in ("negative", "neg", "-prompt", "anti")):
                         actual_name = "negative_prompt"
 
-            raw_params.append({
-                "name_hint": actual_name,
-                "node_id": node_id,
-                "field": p_field,
-                "type": t,
-                "value": value,
-                "class_type": cls,
-            })
+            raw_params.append(
+                {
+                    "name_hint": actual_name,
+                    "node_id": node_id,
+                    "field": p_field,
+                    "type": t,
+                    "value": value,
+                    "class_type": cls,
+                }
+            )
 
     # ----- symmetric duplicate-name resolution -----
     # Group by name_hint. If a hint appears once, keep it. If multiple, suffix
@@ -207,8 +213,10 @@ def extract_schema(workflow: dict) -> dict:
         if len(entries) == 1:
             r = entries[0]
             parameters[name] = {
-                "node_id": r["node_id"], "field": r["field"],
-                "type": r["type"], "value": r["value"],
+                "node_id": r["node_id"],
+                "field": r["field"],
+                "type": r["type"],
+                "value": r["value"],
                 "class_type": r["class_type"],
             }
         else:
@@ -217,8 +225,10 @@ def extract_schema(workflow: dict) -> dict:
             for r in entries:
                 full_name = f"{name}_{r['node_id']}"
                 parameters[full_name] = {
-                    "node_id": r["node_id"], "field": r["field"],
-                    "type": r["type"], "value": r["value"],
+                    "node_id": r["node_id"],
+                    "field": r["field"],
+                    "type": r["type"],
+                    "value": r["value"],
                     "class_type": r["class_type"],
                     "alias_of": name,
                 }
@@ -244,13 +254,15 @@ def extract_schema(workflow: dict) -> dict:
                 found_field = fname
                 excerpt = fval[:120]
                 break
-        embedding_deps.append({
-            "node_id": nid,
-            "embedding_name": emb_name,
-            "field": found_field,
-            "value_excerpt": excerpt,
-            "folder": "embeddings",
-        })
+        embedding_deps.append(
+            {
+                "node_id": nid,
+                "embedding_name": emb_name,
+                "field": found_field,
+                "value_excerpt": excerpt,
+                "folder": "embeddings",
+            }
+        )
 
     # ----- summary -----
     summary = {
@@ -261,9 +273,14 @@ def extract_schema(workflow: dict) -> dict:
         "has_negative_prompt": "negative_prompt" in parameters,
         "has_seed": "seed" in parameters or any(p.startswith("seed_") for p in parameters),
         "is_video_workflow": any(
-            workflow.get(n, {}).get("class_type", "") in {
-                "VHS_VideoCombine", "SaveVideo", "SaveAnimatedWEBP", "SaveAnimatedPNG",
-            } for n in output_nodes
+            workflow.get(n, {}).get("class_type", "")
+            in {
+                "VHS_VideoCombine",
+                "SaveVideo",
+                "SaveAnimatedWEBP",
+                "SaveAnimatedPNG",
+            }
+            for n in output_nodes
         ),
     }
 
@@ -280,8 +297,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Extract controllable parameters from a ComfyUI workflow")
     p.add_argument("workflow", help="Path to workflow API JSON file")
     p.add_argument("--output", "-o", help="Output file (default: stdout)")
-    p.add_argument("--summary-only", action="store_true",
-                   help="Only print the summary block")
+    p.add_argument("--summary-only", action="store_true", help="Only print the summary block")
     args = p.parse_args(argv)
 
     wf_path = Path(args.workflow).expanduser()

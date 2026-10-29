@@ -58,6 +58,7 @@ def strip_html(text: str | None) -> str:
 
 # ── HTTP ─────────────────────────────────────────────────────────────────────
 
+
 def _get(url: str, headers: dict | None = None, retry_on_429: bool = True) -> tuple[bytes, dict]:
     hdrs = {"User-Agent": USER_AGENT, "Accept": "*/*"}
     hdrs.update(headers or {})
@@ -87,6 +88,7 @@ def _reset_seconds(headers) -> int:
 
 # ── OAuth backend ────────────────────────────────────────────────────────────
 
+
 def oauth_credentials() -> tuple[str, str] | None:
     cid, secret = os.environ.get("REDDIT_CLIENT_ID"), os.environ.get("REDDIT_CLIENT_SECRET")
     return (cid, secret) if cid and secret else None
@@ -96,7 +98,8 @@ def oauth_token(cid: str, secret: str) -> str:
     body = urllib.parse.urlencode({"grant_type": "client_credentials"}).encode()
     auth = base64.b64encode(f"{cid}:{secret}".encode()).decode()
     req = urllib.request.Request(
-        f"{WWW}/api/v1/access_token", data=body,
+        f"{WWW}/api/v1/access_token",
+        data=body,
         headers={"Authorization": f"Basic {auth}", "User-Agent": USER_AGENT},
     )
     with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
@@ -131,11 +134,16 @@ def _flatten_comments(children: list, depth: int = 0, out: list | None = None) -
         if c.get("kind") != "t1":
             continue
         d = c["data"]
-        out.append({
-            "author": d.get("author"), "score": d.get("score"), "depth": depth,
-            "created_utc": d.get("created_utc"), "body": (d.get("body") or "")[:4000],
-            "url": f"{WWW}{d['permalink']}" if d.get("permalink") else None,
-        })
+        out.append(
+            {
+                "author": d.get("author"),
+                "score": d.get("score"),
+                "depth": depth,
+                "created_utc": d.get("created_utc"),
+                "body": (d.get("body") or "")[:4000],
+                "url": f"{WWW}{d['permalink']}" if d.get("permalink") else None,
+            }
+        )
         replies = d.get("replies")
         if isinstance(replies, dict):
             _flatten_comments(replies["data"]["children"], depth + 1, out)
@@ -156,19 +164,22 @@ def api_thread(token: str, sub: str, post_id: str, limit: int) -> dict:
 
 # ── Anonymous Atom backend ───────────────────────────────────────────────────
 
+
 def _entries(url: str) -> list[dict]:
     data, _ = _get(url)
     root = ET.fromstring(data)
     out = []
     for e in root.findall("a:entry", ATOM):
         link = e.find("a:link", ATOM)
-        out.append({
-            "title": strip_html(e.findtext("a:title", default="", namespaces=ATOM)),
-            "author": (e.findtext("a:author/a:name", default="", namespaces=ATOM) or "").replace("/u/", "") or None,
-            "created": e.findtext("a:updated", default="", namespaces=ATOM) or None,
-            "url": link.get("href") if link is not None else None,
-            "body": strip_html(e.findtext("a:content", default="", namespaces=ATOM))[:4000],
-        })
+        out.append(
+            {
+                "title": strip_html(e.findtext("a:title", default="", namespaces=ATOM)),
+                "author": (e.findtext("a:author/a:name", default="", namespaces=ATOM) or "").replace("/u/", "") or None,
+                "created": e.findtext("a:updated", default="", namespaces=ATOM) or None,
+                "url": link.get("href") if link is not None else None,
+                "body": strip_html(e.findtext("a:content", default="", namespaces=ATOM))[:4000],
+            }
+        )
     return out
 
 
@@ -182,13 +193,18 @@ def atom_thread(sub: str, post_id: str, limit: int) -> dict:
     if not entries:
         raise SystemExit("thread feed returned no entries")
     post, comments = entries[0], entries[1:]
-    post["comments"] = [{"author": c["author"], "created": c["created"], "body": c["body"], "url": c["url"]} for c in comments]
-    post["note"] = ("anonymous feed: scores and nesting unavailable; register a free Reddit script app and set "
-                    "REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET (no user login) for full data")
+    post["comments"] = [
+        {"author": c["author"], "created": c["created"], "body": c["body"], "url": c["url"]} for c in comments
+    ]
+    post["note"] = (
+        "anonymous feed: scores and nesting unavailable; register a free Reddit script app and set "
+        "REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET (no user login) for full data"
+    )
     return post
 
 
 # ── Commands ─────────────────────────────────────────────────────────────────
+
 
 def parse_thread_url(url: str) -> tuple[str, str]:
     m = _THREAD_RE.search(url)
@@ -260,7 +276,11 @@ def render(cmd: str, result) -> str:
         return "\n".join(f"{k}: {v}" for k, v in result.items())
     if cmd == "thread":
         p = result
-        lines = [f"# {p.get('title')}  — u/{p.get('author')}  score={p.get('score', '?')}  {p.get('url')}", p.get("body", "")[:1500], ""]
+        lines = [
+            f"# {p.get('title')}  — u/{p.get('author')}  score={p.get('score', '?')}  {p.get('url')}",
+            p.get("body", "")[:1500],
+            "",
+        ]
         for c in p["comments"]:
             indent = "  " * c.get("depth", 0)
             lines.append(f"{indent}- u/{c.get('author')} (score {c.get('score', '?')}): {c.get('body', '')[:600]}")
@@ -271,7 +291,9 @@ def render(cmd: str, result) -> str:
     for p in result:
         score = f" ↑{p['score']}" if p.get("score") is not None else ""
         nc = f" 💬{p['num_comments']}" if p.get("num_comments") is not None else ""
-        lines.append(f"- {p.get('title') or p.get('body', '')[:80]}{score}{nc}  — u/{p.get('author')}\n  {p.get('url')}")
+        lines.append(
+            f"- {p.get('title') or p.get('body', '')[:80]}{score}{nc}  — u/{p.get('author')}\n  {p.get('url')}"
+        )
         if p.get("body") and p.get("title"):
             lines.append(f"  {p['body'][:300]}")
     return "\n".join(lines) or "(no results)"
@@ -281,10 +303,23 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--json", action="store_true")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("sub"); s.add_argument("name"); s.add_argument("--sort", default="hot", choices=["hot", "new", "top", "rising"]); s.add_argument("--time", default="week", choices=["hour", "day", "week", "month", "year", "all"]); s.add_argument("--limit", type=int, default=15)
-    q = sub.add_parser("search"); q.add_argument("query"); q.add_argument("--sub"); q.add_argument("--sort", default="relevance", choices=["relevance", "new", "top", "comments"]); q.add_argument("--time", default="all", choices=["hour", "day", "week", "month", "year", "all"]); q.add_argument("--limit", type=int, default=15)
-    t = sub.add_parser("thread"); t.add_argument("url"); t.add_argument("--limit", type=int, default=40)
-    u = sub.add_parser("user"); u.add_argument("name"); u.add_argument("--limit", type=int, default=15)
+    s = sub.add_parser("sub")
+    s.add_argument("name")
+    s.add_argument("--sort", default="hot", choices=["hot", "new", "top", "rising"])
+    s.add_argument("--time", default="week", choices=["hour", "day", "week", "month", "year", "all"])
+    s.add_argument("--limit", type=int, default=15)
+    q = sub.add_parser("search")
+    q.add_argument("query")
+    q.add_argument("--sub")
+    q.add_argument("--sort", default="relevance", choices=["relevance", "new", "top", "comments"])
+    q.add_argument("--time", default="all", choices=["hour", "day", "week", "month", "year", "all"])
+    q.add_argument("--limit", type=int, default=15)
+    t = sub.add_parser("thread")
+    t.add_argument("url")
+    t.add_argument("--limit", type=int, default=40)
+    u = sub.add_parser("user")
+    u.add_argument("name")
+    u.add_argument("--limit", type=int, default=15)
     sub.add_parser("doctor")
     args = ap.parse_args(argv)
 

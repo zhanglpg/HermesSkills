@@ -8,6 +8,7 @@ so callers can branch instead of crashing.
 Typical uses: visual verification with a vision model, and exporting
 image-only (scanned) pages for hand-off to the references/ocr-extraction.md in this skill.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -62,7 +63,10 @@ def main() -> int:
     try:
         from pypdf import PdfReader
     except ImportError:
-        print("Missing dependency: 'pypdf' is not importable here; rerun with the documents interpreter $PY from the pdf skill's Prerequisites setup block", file=sys.stderr)
+        print(
+            "Missing dependency: 'pypdf' is not importable here; rerun with the documents interpreter $PY from the pdf skill's Prerequisites setup block",
+            file=sys.stderr,
+        )
         return 2
     reader = PdfReader(args.pdf)
     if reader.is_encrypted:
@@ -89,8 +93,12 @@ def main() -> int:
         out_path = out_dir / f"{args.prefix}{pageno:03d}.png"
         img.save(out_path)
         files.append(str(out_path))
-    json.dump({"rendered": True, "dpi": args.dpi, "page_count": page_count,
-               "files": files}, sys.stdout, ensure_ascii=False, indent=2)
+    json.dump(
+        {"rendered": True, "dpi": args.dpi, "page_count": page_count, "files": files},
+        sys.stdout,
+        ensure_ascii=False,
+        indent=2,
+    )
     print()
     return 0
 

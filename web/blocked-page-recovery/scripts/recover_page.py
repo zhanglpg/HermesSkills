@@ -15,6 +15,7 @@ Stdlib only. Usage:
 
 Exit codes: 0 recovered, 1 nothing worked, 2 bad invocation.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,10 +28,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-)
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 
 ARCHIVE_TODAY_HOSTS = ["archive.ph", "archive.md", "archive.li", "archive.is"]
 
@@ -48,9 +46,7 @@ INTERSTITIAL_TITLES = (
 # Below these floors a body is a stub or an error page, not content.
 MIN_BODY_BYTES = {"wayback": 3072, "archive_today": 3072, "jina": 512}
 
-REDIRECT_STUB_RE = re.compile(
-    r'http-equiv=["\']?refresh|window\.location|location\.replace', re.IGNORECASE
-)
+REDIRECT_STUB_RE = re.compile(r'http-equiv=["\']?refresh|window\.location|location\.replace', re.IGNORECASE)
 TITLE_RE = re.compile(r"<title[^>]*>(.*?)</title>", re.IGNORECASE | re.DOTALL)
 
 
@@ -121,9 +117,7 @@ def try_wayback(url: str, timeout: int) -> dict | None:
         except (json.JSONDecodeError, AttributeError):
             closest = {}
         if closest.get("available") and closest.get("url"):
-            snap_url = closest["url"].replace(
-                "http://web.archive.org", "https://web.archive.org"
-            )
+            snap_url = closest["url"].replace("http://web.archive.org", "https://web.archive.org")
             snap_ts = closest.get("timestamp")
     if snap_url is None:
         # Discovery API is rate-limited far more aggressively than snapshot
@@ -167,9 +161,7 @@ def try_jina(url: str, timeout: int) -> dict | None:
     key = os.environ.get("JINA_API_KEY")
     if not key:
         return None
-    status, body = _fetch(
-        "https://r.jina.ai/" + url, timeout, headers={"Authorization": f"Bearer {key}"}
-    )
+    status, body = _fetch("https://r.jina.ai/" + url, timeout, headers={"Authorization": f"Bearer {key}"})
     if status != 200 or validate(body, "jina", url):
         return None
     return {
@@ -193,9 +185,7 @@ def recover(url: str, timeout: int = 25) -> dict | None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(
-        description="Recover a blocked / paywalled / WAF'd page from third-party copies."
-    )
+    ap = argparse.ArgumentParser(description="Recover a blocked / paywalled / WAF'd page from third-party copies.")
     ap.add_argument("url")
     ap.add_argument("--json", action="store_true", help="print metadata as JSON")
     ap.add_argument("--out", help="write recovered body to this file")
@@ -208,8 +198,11 @@ def main() -> int:
 
     result = recover(args.url, args.timeout)
     if not result:
-        msg = {"recovered": False, "url": args.url,
-               "hint": "No archive copy found. Try the API-first pivot or the browser tool."}
+        msg = {
+            "recovered": False,
+            "url": args.url,
+            "hint": "No archive copy found. Try the API-first pivot or the browser tool.",
+        }
         print(json.dumps(msg, indent=2) if args.json else msg["hint"], file=sys.stderr)
         return 1
 
@@ -230,8 +223,7 @@ def main() -> int:
             print(body[:2000].decode("utf-8", "replace"))
     if result["provenance"] == "snapshot":
         print(
-            "\nNOTE: this is an ARCHIVED SNAPSHOT, not the live page. "
-            "Cite it with its timestamp.",
+            "\nNOTE: this is an ARCHIVED SNAPSHOT, not the live page. Cite it with its timestamp.",
             file=sys.stderr,
         )
     return 0

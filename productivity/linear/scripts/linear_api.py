@@ -43,6 +43,7 @@ Auth:
 Output:
   JSON to stdout. Errors to stderr with non-zero exit code.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -109,6 +110,7 @@ def emit(obj: Any) -> None:
 
 
 # ---------- Commands ----------
+
 
 def cmd_whoami(_args: argparse.Namespace) -> None:
     q = "query { viewer { id name email displayName } }"
@@ -271,8 +273,7 @@ def cmd_update_status(args: argparse.Namespace) -> None:
     match = next((s for s in issue["team"]["states"]["nodes"] if s["name"].lower() == sl), None)
     if not match:
         sys.stderr.write(
-            f"State '{args.state}' not found. Available: "
-            f"{[s['name'] for s in issue['team']['states']['nodes']]}\n"
+            f"State '{args.state}' not found. Available: {[s['name'] for s in issue['team']['states']['nodes']]}\n"
         )
         sys.exit(1)
 
@@ -294,6 +295,7 @@ def cmd_add_comment(args: argparse.Namespace) -> None:
 
 
 # ---- Documents ----
+
 
 def cmd_list_documents(args: argparse.Namespace) -> None:
     q = """query($first: Int!) {
@@ -354,6 +356,7 @@ def cmd_raw(args: argparse.Namespace) -> None:
 
 
 # ---------- Arg parsing ----------
+
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="linear_api.py", description="Linear GraphQL CLI")

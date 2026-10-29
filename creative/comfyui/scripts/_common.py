@@ -29,6 +29,7 @@ from urllib.parse import urlparse
 # Optional: prefer `requests` if installed (better redirects, streaming, header handling)
 try:
     import requests  # type: ignore[import-not-found]
+
     HAS_REQUESTS = True
 except ImportError:  # pragma: no cover - exercised via stdlib fallback
     HAS_REQUESTS = False
@@ -45,10 +46,10 @@ DEFAULT_CLOUD_HOST = "https://cloud.comfy.org"
 ENV_API_KEY = "COMFY_CLOUD_API_KEY"
 
 # Connection / retry defaults
-DEFAULT_HTTP_TIMEOUT = 60          # seconds — single-attempt request timeout
-DEFAULT_RETRIES = 3                # total attempts including the first
-RETRY_BASE_DELAY = 1.0             # seconds — exponential backoff base
-RETRY_MAX_DELAY = 30.0             # seconds — cap on backoff
+DEFAULT_HTTP_TIMEOUT = 60  # seconds — single-attempt request timeout
+DEFAULT_RETRIES = 3  # total attempts including the first
+RETRY_BASE_DELAY = 1.0  # seconds — exponential backoff base
+RETRY_MAX_DELAY = 30.0  # seconds — cap on backoff
 RETRY_STATUS_CODES = {408, 429, 500, 502, 503, 504, 522, 524}
 
 # Streaming download chunk size (bytes)
@@ -56,11 +57,17 @@ DOWNLOAD_CHUNK_SIZE = 1 << 16  # 64 KiB
 
 # Heuristic: workflows with these node types tend to be slow → larger default timeout
 SLOW_OUTPUT_NODES = {
-    "VHS_VideoCombine", "SaveAnimatedWEBP", "SaveAnimatedPNG",
-    "SaveVideo", "SaveAudio", "SaveAnimateDiffVideo",
+    "VHS_VideoCombine",
+    "SaveAnimatedWEBP",
+    "SaveAnimatedPNG",
+    "SaveVideo",
+    "SaveAudio",
+    "SaveAnimateDiffVideo",
     "SVD_img2vid_Conditioning",
-    "WanVideoSampler", "HunyuanVideoSampler",
-    "CogVideoSampler", "LTXVideoSampler",
+    "WanVideoSampler",
+    "HunyuanVideoSampler",
+    "CogVideoSampler",
+    "LTXVideoSampler",
 }
 
 # ---------------------------------------------------------------------------
@@ -68,19 +75,24 @@ SLOW_OUTPUT_NODES = {
 # ---------------------------------------------------------------------------
 OUTPUT_NODES: set[str] = {
     # Built-in
-    "SaveImage", "PreviewImage",
-    "SaveAudio", "SaveVideo", "PreviewAudio", "PreviewVideo",
-    "SaveAnimatedWEBP", "SaveAnimatedPNG",
+    "SaveImage",
+    "PreviewImage",
+    "SaveAudio",
+    "SaveVideo",
+    "PreviewAudio",
+    "PreviewVideo",
+    "SaveAnimatedWEBP",
+    "SaveAnimatedPNG",
     # Common community packs
-    "VHS_VideoCombine",       # Video Helper Suite
-    "ImageSave",              # Was Node Suite
-    "Image Save",             # Was Node Suite (alt name)
-    "easy imageSave",         # easy-use
+    "VHS_VideoCombine",  # Video Helper Suite
+    "ImageSave",  # Was Node Suite
+    "Image Save",  # Was Node Suite (alt name)
+    "easy imageSave",  # easy-use
     "Image Save With Metadata",
-    "PreviewImage|pysssss",   # pysssss preview
+    "PreviewImage|pysssss",  # pysssss preview
     "ShowText|pysssss",
     "SaveLatent",
-    "SaveGLB",                # 3D
+    "SaveGLB",  # 3D
     "Save3D",
 }
 
@@ -112,50 +124,50 @@ def folder_aliases_for(folder: str) -> list[str]:
 # *canonical* one; FOLDER_ALIASES is consulted when querying.
 MODEL_LOADERS: dict[str, list[tuple[str, str]]] = {
     # Checkpoints
-    "CheckpointLoaderSimple":   [("ckpt_name", "checkpoints")],
-    "CheckpointLoader":         [("ckpt_name", "checkpoints")],
+    "CheckpointLoaderSimple": [("ckpt_name", "checkpoints")],
+    "CheckpointLoader": [("ckpt_name", "checkpoints")],
     "CheckpointLoader (Simple)": [("ckpt_name", "checkpoints")],
     "ImageOnlyCheckpointLoader": [("ckpt_name", "checkpoints")],
-    "unCLIPCheckpointLoader":   [("ckpt_name", "checkpoints")],
+    "unCLIPCheckpointLoader": [("ckpt_name", "checkpoints")],
     # LoRA
-    "LoraLoader":               [("lora_name", "loras")],
-    "LoraLoaderModelOnly":      [("lora_name", "loras")],
-    "LoraLoaderTagsQuery":      [("lora_name", "loras")],
+    "LoraLoader": [("lora_name", "loras")],
+    "LoraLoaderModelOnly": [("lora_name", "loras")],
+    "LoraLoaderTagsQuery": [("lora_name", "loras")],
     # VAE
-    "VAELoader":                [("vae_name", "vae")],
+    "VAELoader": [("vae_name", "vae")],
     # ControlNet
-    "ControlNetLoader":         [("control_net_name", "controlnet")],
-    "DiffControlNetLoader":     [("control_net_name", "controlnet")],
+    "ControlNetLoader": [("control_net_name", "controlnet")],
+    "DiffControlNetLoader": [("control_net_name", "controlnet")],
     "ControlNetLoaderAdvanced": [("control_net_name", "controlnet")],
     # CLIP / text encoders (primary "clip" folder; check_deps tries text_encoders too)
-    "CLIPLoader":               [("clip_name", "clip")],
-    "DualCLIPLoader":           [("clip_name1", "clip"), ("clip_name2", "clip")],
-    "TripleCLIPLoader":         [("clip_name1", "clip"), ("clip_name2", "clip"), ("clip_name3", "clip")],
-    "CLIPVisionLoader":         [("clip_name", "clip_vision")],
+    "CLIPLoader": [("clip_name", "clip")],
+    "DualCLIPLoader": [("clip_name1", "clip"), ("clip_name2", "clip")],
+    "TripleCLIPLoader": [("clip_name1", "clip"), ("clip_name2", "clip"), ("clip_name3", "clip")],
+    "CLIPVisionLoader": [("clip_name", "clip_vision")],
     # UNET / Diffusion model (primary "unet"; check_deps tries diffusion_models too)
-    "UNETLoader":               [("unet_name", "unet")],
-    "DiffusionModelLoader":     [("model_name", "diffusion_models")],
-    "UNETLoaderGGUF":           [("unet_name", "unet")],
+    "UNETLoader": [("unet_name", "unet")],
+    "DiffusionModelLoader": [("model_name", "diffusion_models")],
+    "UNETLoaderGGUF": [("unet_name", "unet")],
     # Upscaler
-    "UpscaleModelLoader":       [("model_name", "upscale_models")],
+    "UpscaleModelLoader": [("model_name", "upscale_models")],
     # Style / GLIGEN / Hypernetwork
-    "StyleModelLoader":         [("style_model_name", "style_models")],
-    "GLIGENLoader":             [("gligen_name", "gligen")],
-    "HypernetworkLoader":       [("hypernetwork_name", "hypernetworks")],
+    "StyleModelLoader": [("style_model_name", "style_models")],
+    "GLIGENLoader": [("gligen_name", "gligen")],
+    "HypernetworkLoader": [("hypernetwork_name", "hypernetworks")],
     # IPAdapter family (community).
     # Note: IPAdapterUnifiedLoader's `preset` and IPAdapterInsightFaceLoader's
     # `provider` are enums (not file paths), so they're intentionally omitted —
     # check_deps would otherwise treat enum values as missing model files.
-    "IPAdapterModelLoader":     [("ipadapter_file", "ipadapter")],
-    "InstantIDModelLoader":     [("instantid_file", "instantid")],
+    "IPAdapterModelLoader": [("ipadapter_file", "ipadapter")],
+    "InstantIDModelLoader": [("instantid_file", "instantid")],
     # AnimateDiff / video
     "ADE_LoadAnimateDiffModel": [("model_name", "animatediff_models")],
     "ADE_AnimateDiffLoaderWithContext": [("model_name", "animatediff_models")],
     "ADE_AnimateDiffLoaderGen1": [("model_name", "animatediff_models")],
     # Photomaker
-    "PhotoMakerLoader":         [("photomaker_model_name", "photomaker")],
+    "PhotoMakerLoader": [("photomaker_model_name", "photomaker")],
     # Sampler / scheduler models
-    "ModelSamplingFlux":        [],  # parametric only
+    "ModelSamplingFlux": [],  # parametric only
 }
 
 # ---------------------------------------------------------------------------
@@ -173,7 +185,6 @@ PARAM_PATTERNS: list[tuple[str, str, str]] = [
     ("CLIPTextEncodeFlux", "guidance", "guidance"),
     ("smZ CLIPTextEncode", "text", "prompt"),
     ("BNK_CLIPTextEncodeAdvanced", "text", "prompt"),
-
     # ---- Standard sampling ----
     ("KSampler", "seed", "seed"),
     ("KSampler", "steps", "steps"),
@@ -188,7 +199,6 @@ PARAM_PATTERNS: list[tuple[str, str, str]] = [
     ("KSamplerAdvanced", "scheduler", "scheduler"),
     ("KSamplerAdvanced", "start_at_step", "start_at_step"),
     ("KSamplerAdvanced", "end_at_step", "end_at_step"),
-
     # ---- Modern sampler chain (Flux / SD3 / SDXL refiner via SamplerCustom) ----
     ("RandomNoise", "noise_seed", "seed"),
     ("BasicScheduler", "steps", "steps"),
@@ -210,7 +220,6 @@ PARAM_PATTERNS: list[tuple[str, str, str]] = [
     ("SamplerCustom", "noise_seed", "seed"),
     ("SamplerCustom", "cfg", "cfg"),
     # NB: SamplerCustomAdvanced takes a NOISE input (from RandomNoise) — no seed field directly.
-
     # ---- Dimensions / latent ----
     ("EmptyLatentImage", "width", "width"),
     ("EmptyLatentImage", "height", "height"),
@@ -233,14 +242,12 @@ PARAM_PATTERNS: list[tuple[str, str, str]] = [
     ("LatentUpscaleBy", "scale_by", "scale_by"),
     ("ImageScale", "width", "width"),
     ("ImageScale", "height", "height"),
-
     # ---- Image input ----
     ("LoadImage", "image", "image"),
     ("LoadImageMask", "image", "mask_image"),
     ("LoadImageOutput", "image", "image"),
     ("VHS_LoadVideo", "video", "video"),
     ("VHS_LoadAudio", "audio", "audio"),
-
     # ---- Model selection (sometimes useful to swap per run) ----
     ("CheckpointLoaderSimple", "ckpt_name", "ckpt_name"),
     ("CheckpointLoader", "ckpt_name", "ckpt_name"),
@@ -253,39 +260,32 @@ PARAM_PATTERNS: list[tuple[str, str, str]] = [
     ("DualCLIPLoader", "clip_name1", "clip_name1"),
     ("DualCLIPLoader", "clip_name2", "clip_name2"),
     ("ControlNetLoader", "control_net_name", "controlnet_name"),
-
     # ---- LoRA ----
     ("LoraLoader", "lora_name", "lora_name"),
     ("LoraLoader", "strength_model", "lora_strength"),
     ("LoraLoader", "strength_clip", "lora_strength_clip"),
     ("LoraLoaderModelOnly", "lora_name", "lora_name"),
     ("LoraLoaderModelOnly", "strength_model", "lora_strength"),
-
     # ---- ControlNet ----
     ("ControlNetApply", "strength", "controlnet_strength"),
     ("ControlNetApplyAdvanced", "strength", "controlnet_strength"),
     ("ControlNetApplyAdvanced", "start_percent", "controlnet_start"),
     ("ControlNetApplyAdvanced", "end_percent", "controlnet_end"),
-
     # ---- IPAdapter ----
     ("IPAdapterAdvanced", "weight", "ipadapter_weight"),
     ("IPAdapterAdvanced", "start_at", "ipadapter_start"),
     ("IPAdapterAdvanced", "end_at", "ipadapter_end"),
     ("IPAdapter", "weight", "ipadapter_weight"),
-
     # ---- Upscale ----
     ("ImageUpscaleWithModel", "upscale_method", "upscale_method"),
-
     # ---- AnimateDiff ----
     ("ADE_AnimateDiffLoaderWithContext", "motion_scale", "motion_scale"),
     ("ADE_AnimateDiffLoaderGen1", "motion_scale", "motion_scale"),
-
     # ---- Video / Save ----
     ("VHS_VideoCombine", "frame_rate", "frame_rate"),
     ("VHS_VideoCombine", "format", "video_format"),
     ("VHS_VideoCombine", "filename_prefix", "filename_prefix"),
     ("SaveImage", "filename_prefix", "filename_prefix"),
-
     # ---- Hunyuan / Wan / LTX video ----
     ("HunyuanVideoSampler", "seed", "seed"),
     ("HunyuanVideoSampler", "steps", "steps"),
@@ -295,12 +295,10 @@ PARAM_PATTERNS: list[tuple[str, str, str]] = [
     ("WanVideoSampler", "cfg", "cfg"),
     ("LTXVScheduler", "max_shift", "max_shift"),
     ("LTXVScheduler", "base_shift", "base_shift"),
-
     # ---- rgthree primitives (often used as user-facing inputs) ----
     ("Seed (rgthree)", "seed", "seed"),
     ("Image Comparer (rgthree)", "image_a", "image"),
     ("Power Lora Loader (rgthree)", "PowerLoraLoaderHeaderWidget", "_lora_header"),
-
     # ---- Easy-use / utility primitives ----
     ("PrimitiveNode", "value", "primitive_value"),
     ("easy seed", "seed", "seed"),
@@ -368,9 +366,9 @@ def cloud_endpoint(path: str) -> str:
       /models        -> /experiment/models
     """
     if path.startswith("/history") and not path.startswith("/history_v2"):
-        return "/history_v2" + path[len("/history"):]
+        return "/history_v2" + path[len("/history") :]
     if path.startswith("/models/"):
-        return "/experiment/models/" + path[len("/models/"):]
+        return "/experiment/models/" + path[len("/models/") :]
     if path == "/models":
         return "/experiment/models"
     return path
@@ -388,6 +386,7 @@ def resolve_url(base: str, path: str, *, is_cloud: bool | None = None) -> str:
 # API key resolution
 # =============================================================================
 
+
 def resolve_api_key(explicit: str | None) -> str | None:
     """Look up API key from CLI flag → env var. Strips whitespace and quotes."""
     val = explicit if explicit else os.environ.get(ENV_API_KEY)
@@ -400,6 +399,7 @@ def resolve_api_key(explicit: str | None) -> str | None:
 # =============================================================================
 # HTTP transport
 # =============================================================================
+
 
 @dataclass
 class HTTPResponse:
@@ -417,7 +417,7 @@ class HTTPResponse:
 
 def _sleep_backoff(attempt: int, base: float = RETRY_BASE_DELAY, cap: float = RETRY_MAX_DELAY) -> None:
     """Sleep with full-jitter exponential backoff."""
-    delay = min(cap, base * (2 ** attempt))
+    delay = min(cap, base * (2**attempt))
     delay = random.uniform(0, delay)
     time.sleep(delay)
 
@@ -458,19 +458,23 @@ def http_request(
         # Multipart upload — needs `requests`. The stdlib fallback lacks
         # multipart encoding helpers; raise a clear error.
         if not HAS_REQUESTS:
-            raise RuntimeError(
-                "Multipart upload requires the `requests` package. "
-                "Install with: pip install requests"
-            )
+            raise RuntimeError("Multipart upload requires the `requests` package. Install with: pip install requests")
 
     last_exc: Exception | None = None
     for attempt in range(retries):
         try:
             resp = _http_once(
-                method=method, url=url, headers=headers,
-                json_body=json_body, data=data, files=files, form=form,
-                timeout=timeout, follow_redirects=follow_redirects,
-                stream=stream, sink=sink,
+                method=method,
+                url=url,
+                headers=headers,
+                json_body=json_body,
+                data=data,
+                files=files,
+                form=form,
+                timeout=timeout,
+                follow_redirects=follow_redirects,
+                stream=stream,
+                sink=sink,
             )
             if resp.status in RETRY_STATUS_CODES and attempt + 1 < retries:
                 _sleep_backoff(attempt)
@@ -493,6 +497,7 @@ _SENSITIVE_HEADERS = ("x-api-key", "authorization", "cookie")
 
 
 if HAS_REQUESTS:
+
     class _StripSensitiveOnRedirectSession(requests.Session):
         """Session that drops sensitive headers on cross-host redirects.
 
@@ -521,16 +526,27 @@ if HAS_REQUESTS:
 
 
 def _http_once(
-    *, method: str, url: str, headers: dict[str, str],
-    json_body: Any, data: bytes | None, files: dict | None, form: dict | None,
-    timeout: float, follow_redirects: bool,
-    stream: bool, sink: Path | None,
+    *,
+    method: str,
+    url: str,
+    headers: dict[str, str],
+    json_body: Any,
+    data: bytes | None,
+    files: dict | None,
+    form: dict | None,
+    timeout: float,
+    follow_redirects: bool,
+    stream: bool,
+    sink: Path | None,
 ) -> HTTPResponse:
     """One HTTP attempt. No retry."""
     if HAS_REQUESTS:
         kwargs: dict[str, Any] = {
-            "method": method, "url": url, "headers": headers,
-            "timeout": timeout, "allow_redirects": follow_redirects,
+            "method": method,
+            "url": url,
+            "headers": headers,
+            "timeout": timeout,
+            "allow_redirects": follow_redirects,
         }
         if json_body is not None:
             kwargs["json"] = json_body
@@ -591,8 +607,7 @@ def _http_once(
             if new_host != self.original_host:
                 # Build a new request with cleaned headers
                 clean_headers = {
-                    k: v for k, v in req2.header_items()
-                    if k.lower() not in ("x-api-key", "authorization", "cookie")
+                    k: v for k, v in req2.header_items() if k.lower() not in ("x-api-key", "authorization", "cookie")
                 }
                 new_req = urllib.request.Request(newurl, headers=clean_headers, method="GET")
                 return new_req
@@ -640,6 +655,7 @@ def http_post(url: str, **kwargs: Any) -> HTTPResponse:
 # Workflow validation & helpers
 # =============================================================================
 
+
 def is_api_format(workflow: Any) -> bool:
     """API format = top-level dict where each value has `class_type`."""
     if not isinstance(workflow, dict):
@@ -666,19 +682,12 @@ def unwrap_workflow(payload: Any) -> dict:
             "Re-export from ComfyUI using 'Workflow → Export (API)' (newer UI) "
             "or 'Save (API Format)' (older UI)."
         )
-    raise ValueError(
-        "Workflow is not in API format. Each top-level entry must have a 'class_type' field."
-    )
+    raise ValueError("Workflow is not in API format. Each top-level entry must have a 'class_type' field.")
 
 
 def is_link(value: Any) -> bool:
     """True if `value` is a [node_id, output_index] connection (length-2 list)."""
-    return (
-        isinstance(value, list)
-        and len(value) == 2
-        and isinstance(value[0], str)
-        and isinstance(value[1], int)
-    )
+    return isinstance(value, list) and len(value) == 2 and isinstance(value[0], str) and isinstance(value[1], int)
 
 
 def iter_nodes(workflow: dict) -> Iterator[tuple[str, dict]]:
@@ -724,6 +733,7 @@ def iter_embedding_refs(workflow: dict) -> Iterator[tuple[str, str]]:
 # Path safety
 # =============================================================================
 
+
 def safe_path_join(base: Path, *parts: str) -> Path:
     """Join paths, raising if the result escapes `base`.
 
@@ -735,9 +745,7 @@ def safe_path_join(base: Path, *parts: str) -> Path:
     try:
         candidate.relative_to(base_resolved)
     except ValueError as e:
-        raise ValueError(
-            f"Refusing path traversal: {candidate} is outside {base_resolved}"
-        ) from e
+        raise ValueError(f"Refusing path traversal: {candidate} is outside {base_resolved}") from e
     return candidate
 
 
@@ -759,7 +767,11 @@ def looks_like_video_workflow(workflow: dict) -> bool:
     for _, node in iter_nodes(workflow):
         if node["class_type"] in SLOW_OUTPUT_NODES:
             return True
-        if node["class_type"].lower().startswith(("animatediff", "ade_", "wanvideo", "hunyuanvideo", "ltxvideo", "cogvideo")):
+        if (
+            node["class_type"]
+            .lower()
+            .startswith(("animatediff", "ade_", "wanvideo", "hunyuanvideo", "ltxvideo", "cogvideo"))
+        ):
             return True
     return False
 
@@ -793,6 +805,7 @@ def coerce_seed(value: Any) -> int:
 # Cloud model-list normalization
 # =============================================================================
 
+
 def parse_model_list(payload: Any) -> set[str]:
     """Normalize model-list responses from local ComfyUI vs Comfy Cloud.
 
@@ -815,6 +828,7 @@ def parse_model_list(payload: Any) -> set[str]:
 # =============================================================================
 # Misc utilities
 # =============================================================================
+
 
 def new_client_id() -> str:
     return str(uuid.uuid4())

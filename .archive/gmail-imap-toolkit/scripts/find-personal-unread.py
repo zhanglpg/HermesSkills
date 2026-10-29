@@ -10,7 +10,14 @@ Strategy:
 
 Includes connect retry/backoff for Gmail IP throttling (banner hang).
 """
-import imaplib, ssl, subprocess, email, os, re, time, sys
+import email
+import imaplib
+import os
+import re
+import ssl
+import subprocess
+import sys
+import time
 from email.header import decode_header
 from email.utils import parsedate_to_datetime
 

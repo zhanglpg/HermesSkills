@@ -117,22 +117,23 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--host", default=DEFAULT_LOCAL_HOST, help="ComfyUI server URL")
     p.add_argument("--api-key", help=f"API key for cloud (or set ${ENV_API_KEY} env var)")
     p.add_argument("--client-id", default=None, help="Client ID (default: random UUID)")
-    p.add_argument("--prompt-id", default=None,
-                   help="Filter to a specific prompt_id (default: all jobs)")
-    p.add_argument("--previews", default=None,
-                   help="Directory to save in-progress preview frames")
+    p.add_argument("--prompt-id", default=None, help="Filter to a specific prompt_id (default: all jobs)")
+    p.add_argument("--previews", default=None, help="Directory to save in-progress preview frames")
     p.add_argument("--no-color", action="store_true", help="Disable ANSI colour")
-    p.add_argument("--timeout", type=float, default=600.0,
-                   help="Hard cap on monitor duration (default 600s)")
+    p.add_argument("--timeout", type=float, default=600.0, help="Hard cap on monitor duration (default 600s)")
     args = p.parse_args(argv)
 
     try:
         import websocket  # type: ignore[import-not-found]
     except ImportError:
-        print(json.dumps({
-            "error": "websocket-client not installed",
-            "install": "pip install websocket-client",
-        }))
+        print(
+            json.dumps(
+                {
+                    "error": "websocket-client not installed",
+                    "install": "pip install websocket-client",
+                }
+            )
+        )
         return 1
 
     api_key = resolve_api_key(args.api_key)

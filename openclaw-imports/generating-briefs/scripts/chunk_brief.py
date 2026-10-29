@@ -7,22 +7,26 @@ Each chunk is self-contained markdown under 1850 chars.
 Tables split across chunks get header row prepended to continuation chunks.
 No code fences — raw markdown renders properly in Discord.
 """
+
 import sys
 
-path = sys.argv[1] if len(sys.argv) > 1 else '/tmp/full_brief.md'
+path = sys.argv[1] if len(sys.argv) > 1 else "/tmp/full_brief.md"
 with open(path) as f:
     text = f.read()
 
 MAX = 1850
-LABEL_FMT = '**(Chunk {n}/{total})**'
+LABEL_FMT = "**(Chunk {n}/{total})**"
+
 
 def is_table_line(s):
     s = s.strip()
-    return s.startswith('|') and s.endswith('|')
+    return s.startswith("|") and s.endswith("|")
+
 
 def is_table_sep(s):
     s = s.strip()
-    return s.startswith('|') and '---' in s and s.endswith('|')
+    return s.startswith("|") and "---" in s and s.endswith("|")
+
 
 def find_table_header(lines, start=0):
     """Return (header_idx, header_line, sep_line) or None."""
@@ -31,13 +35,14 @@ def find_table_header(lines, start=0):
             return (i, lines[i], lines[i + 1])
     return None
 
+
 # ── Paragraph-based greedy combine ──────────────────────────────
-paras = text.split('\n\n')
+paras = text.split("\n\n")
 chunks_raw = []
-current = ''
+current = ""
 
 for p in paras:
-    sep = '\n\n' if current else ''
+    sep = "\n\n" if current else ""
     trial = current + sep + p
     if len(trial) <= MAX:
         current = trial
@@ -47,11 +52,11 @@ for p in paras:
 
         if len(p) > MAX:
             # ── Oversize paragraph: split by lines ──
-            lines = p.split('\n')
+            lines = p.split("\n")
             hdr_info = find_table_header(lines)
 
-            sub = ''
-            saw_first_header = (hdr_info is not None)
+            sub = ""
+            saw_first_header = hdr_info is not None
             current_hdr = None
 
             for idx, line in enumerate(lines):
@@ -59,14 +64,14 @@ for p in paras:
                 if is_table_line(line) and idx + 1 < len(lines) and is_table_sep(lines[idx + 1]):
                     current_hdr = (line, lines[idx + 1])
 
-                ls = '\n' if sub else ''
+                ls = "\n" if sub else ""
 
                 # Determine if we need to prepend header to a new sub-chunk
                 need_prefix = False
-                prefix = ''
+                prefix = ""
                 if current_hdr and not sub and saw_first_header:
                     need_prefix = True
-                    prefix = current_hdr[0] + '\n' + current_hdr[1] + '\n'
+                    prefix = current_hdr[0] + "\n" + current_hdr[1] + "\n"
 
                 test = sub + ls + line
                 if len(prefix + test) <= MAX:
@@ -74,17 +79,19 @@ for p in paras:
                 else:
                     if sub:
                         chunks_raw.append(prefix + sub)
-                    new_prefix = current_hdr[0] + '\n' + current_hdr[1] + '\n' if current_hdr and saw_first_header else ''
+                    new_prefix = (
+                        current_hdr[0] + "\n" + current_hdr[1] + "\n" if current_hdr and saw_first_header else ""
+                    )
                     if len(new_prefix + line) <= MAX:
                         sub = new_prefix + line
                     else:
                         # Line+prefix still too big
                         chunks_raw.append(line)
-                        sub = ''
+                        sub = ""
 
             if sub:
                 chunks_raw.append(sub)
-            current = ''
+            current = ""
         else:
             current = p
 
@@ -97,7 +104,7 @@ if current:
 merged = []
 for c in chunks_raw:
     if merged and len(c) < 80:
-        merged[-1] = merged[-1] + '\n\n' + c
+        merged[-1] = merged[-1] + "\n\n" + c
     else:
         merged.append(c)
 
@@ -107,7 +114,7 @@ final = []
 last_table_header = None
 
 for c in merged:
-    lines = c.split('\n')
+    lines = c.split("\n")
     needs_header = False
 
     if len(lines) >= 1 and is_table_line(lines[0]):
@@ -122,7 +129,7 @@ for c in merged:
 
     if needs_header and last_table_header:
         hdr, sep = last_table_header
-        c = hdr + '\n' + sep + '\n' + c
+        c = hdr + "\n" + sep + "\n" + c
 
     final.append(c)
 
@@ -130,7 +137,7 @@ for c in merged:
 seen_hn = False
 deduped = []
 for c in final:
-    if '| Story | Points | Comments |' in c[:80]:
+    if "| Story | Points | Comments |" in c[:80]:
         if seen_hn:
             continue
         seen_hn = True
@@ -138,15 +145,15 @@ for c in final:
 
 # ── Report & Output ────────────────────────────────────────────
 total = len(deduped)
-print(f'Total chunks: {total}')
+print(f"Total chunks: {total}")
 for i, c in enumerate(deduped):
     s = len(c)
     status = "OK" if s <= MAX else f"OVERFLOW by {s - MAX}"
-    print(f'Chunk {i+1}: {s} chars {status}')
+    print(f"Chunk {i + 1}: {s} chars {status}")
 
-print('---CHUNKS---')
+print("---CHUNKS---")
 for i, c in enumerate(deduped):
     label = LABEL_FMT.format(n=i + 1, total=total)
-    prefixed = label + '\n' + c
-    print(f'\n=== CHUNK {i+1}/{total} ({len(prefixed)} chars) ===')
+    prefixed = label + "\n" + c
+    print(f"\n=== CHUNK {i + 1}/{total} ({len(prefixed)} chars) ===")
     print(prefixed)

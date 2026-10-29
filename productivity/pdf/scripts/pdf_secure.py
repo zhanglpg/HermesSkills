@@ -4,6 +4,7 @@
 Note: permission flags set at encryption time are advisory — viewers may honor
 them, but any PDF library can strip them. Only the user password gates content.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,7 +32,10 @@ def main() -> int:
     try:
         from pypdf import PdfReader, PdfWriter
     except ImportError:
-        print("Missing dependency: 'pypdf' is not importable here; rerun with the documents interpreter $PY from the pdf skill's Prerequisites setup block", file=sys.stderr)
+        print(
+            "Missing dependency: 'pypdf' is not importable here; rerun with the documents interpreter $PY from the pdf skill's Prerequisites setup block",
+            file=sys.stderr,
+        )
         return 2
 
     reader = PdfReader(args.pdf)

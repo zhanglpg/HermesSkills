@@ -9,6 +9,7 @@ The JSON is a flat object: {"FieldName": "value", "Agree": true, ...}
 Sets NeedAppearances so conforming viewers regenerate field appearances.
 Flattening uses pypdf appearance merging; verify visually for exotic widgets.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,8 +27,9 @@ def main() -> int:
     parser.add_argument("pdf", help="Input form PDF")
     parser.add_argument("--fields-json", required=True, help="UTF-8 JSON file of field values")
     parser.add_argument("-o", "--output", required=True, help="Output PDF path")
-    parser.add_argument("--flatten", action="store_true",
-                        help="Make fields read-only and burn appearances into the page")
+    parser.add_argument(
+        "--flatten", action="store_true", help="Make fields read-only and burn appearances into the page"
+    )
     parser.add_argument("--password", help="Password if the input is encrypted")
     args = parser.parse_args()
 
@@ -35,7 +37,10 @@ def main() -> int:
         from pypdf import PdfReader, PdfWriter
         from pypdf.generic import BooleanObject, NameObject
     except ImportError:
-        print("Missing dependency: 'pypdf' is not importable here; rerun with the documents interpreter $PY from the pdf skill's Prerequisites setup block", file=sys.stderr)
+        print(
+            "Missing dependency: 'pypdf' is not importable here; rerun with the documents interpreter $PY from the pdf skill's Prerequisites setup block",
+            file=sys.stderr,
+        )
         return 2
 
     with open(args.fields_json, encoding="utf-8") as fh:
@@ -70,13 +75,12 @@ def main() -> int:
     # afterwards, so fields the JSON leaves out are baked with their current value.
     to_write = fill
     if args.flatten:
-        to_write = {name: info["/V"] for name, info in field_info.items()
-                    if info.get("/V") not in (None, "")}
+        to_write = {name: info["/V"] for name, info in field_info.items() if info.get("/V") not in (None, "")}
         to_write.update(fill)
     for page in writer.pages:
         writer.update_page_form_field_values(
-            page, to_write, flags=1 if args.flatten else 0,
-            auto_regenerate=False, flatten=args.flatten)
+            page, to_write, flags=1 if args.flatten else 0, auto_regenerate=False, flatten=args.flatten
+        )
 
     root = writer._root_object
     flattened = args.flatten
@@ -86,13 +90,12 @@ def main() -> int:
         # those widgets and the form dictionary to make the result genuinely
         # non-interactive; preserve unrelated links/comments.
         from pypdf.generic import ArrayObject
+
         for page in writer.pages:
             annots = page.get("/Annots")
             if not annots:
                 continue
-            kept = ArrayObject(
-                ref for ref in annots
-                if ref.get_object().get("/Subtype") != "/Widget")
+            kept = ArrayObject(ref for ref in annots if ref.get_object().get("/Subtype") != "/Widget")
             if kept:
                 page[NameObject("/Annots")] = kept
             else:
@@ -104,8 +107,12 @@ def main() -> int:
 
     with open(args.output, "wb") as fh:
         writer.write(fh)
-    print(json.dumps({"output": args.output, "filled": sorted(fill), "skipped": missing,
-                      "flattened": flattened}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {"output": args.output, "filled": sorted(fill), "skipped": missing, "flattened": flattened},
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 

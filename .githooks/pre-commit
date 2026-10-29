@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# HermesSkills pre-commit gate — keeps the GitHub Actions "lint" job green.
+# Install once per clone:  git config core.hooksPath .githooks
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+# Prefer a project venv, then PATH, then python -m ruff.
+if [ -x .venv/bin/ruff ]; then
+  RUFF=.venv/bin/ruff
+elif command -v ruff >/dev/null 2>&1; then
+  RUFF=$(command -v ruff)
+elif python3 -m ruff --version >/dev/null 2>&1; then
+  RUFF="python3 -m ruff"
+else
+  echo "pre-commit: ruff not found." >&2
+  echo "  install:  uv pip install ruff   (or: python3 -m pip install --user ruff)" >&2
+  exit 1
+fi
+
+echo "pre-commit: ruff check ."
+$RUFF check .
+
+echo "pre-commit: ruff format --check ."
+$RUFF format --check .
+
+echo "pre-commit: OK (tests still run in CI; run them before push: pytest tests/)"

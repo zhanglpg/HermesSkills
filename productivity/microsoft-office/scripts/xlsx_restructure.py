@@ -28,6 +28,7 @@ Usage:
   xlsx_restructure.py book.xlsx --sheet Data --insert-cols B:1 --out new.xlsx
   xlsx_restructure.py book.xlsx --sheet Data --delete-cols 4:2
 """
+
 from __future__ import annotations
 
 import argparse
@@ -37,8 +38,7 @@ import sys
 
 from openpyxl import load_workbook
 from openpyxl.formatting.formatting import ConditionalFormattingList
-from openpyxl.utils import (column_index_from_string, get_column_letter,
-                            range_boundaries)
+from openpyxl.utils import column_index_from_string, get_column_letter, range_boundaries
 
 # A1-style reference, optionally sheet-qualified, optionally a range.
 # Guards: not preceded by a word char/$/. (avoids ABC123 identifiers) and
@@ -49,17 +49,20 @@ REF_RE = re.compile(
     rf"(?P<sheet>{SHEET_PATTERN})?"
     r"(?P<start>\$?[A-Za-z]{1,3}\$?[0-9]{1,7})"
     r"(?::(?P<end>\$?[A-Za-z]{1,3}\$?[0-9]{1,7}))?"
-    r"(?![\w(])")
+    r"(?![\w(])"
+)
 WHOLE_COL_RE = re.compile(
     r"(?<![\w$.:])"
     rf"(?P<sheet>{SHEET_PATTERN})?"
     r"(?P<start>\$?[A-Za-z]{1,3}):(?P<end>\$?[A-Za-z]{1,3})"
-    r"(?![\w(])")
+    r"(?![\w(])"
+)
 WHOLE_ROW_RE = re.compile(
     r"(?<![\w$.:])"
     rf"(?P<sheet>{SHEET_PATTERN})?"
     r"(?P<start>\$?[0-9]{1,7}):(?P<end>\$?[0-9]{1,7})"
-    r"(?![\w(])")
+    r"(?![\w(])"
+)
 # String literals and innermost [...] groups (table column names in structured
 # references such as Table1[[A:B]]) are copied through unrewritten.
 LITERAL_RE = re.compile(r'"(?:[^"]|"")*"|\[[^\[\]]*\]')
@@ -133,22 +136,23 @@ class RefRewriter:
             # spans may survive partial deletion: clamp via span math
             s, e = COORD_RE.match(start), COORD_RE.match(end)
             if self.axis == "rows":
-                span = shift_span(int(s.group(4)), int(e.group(4)),
-                                  self.idx, self.n, self.delete)
+                span = shift_span(int(s.group(4)), int(e.group(4)), self.idx, self.n, self.delete)
                 if span is None:
                     return None
                 new_start = f"{s.group(1)}{s.group(2)}{s.group(3)}{span[0]}"
                 new_end = f"{e.group(1)}{e.group(2)}{e.group(3)}{span[1]}"
             else:
-                span = shift_span(column_index_from_string(s.group(2).upper()),
-                                  column_index_from_string(e.group(2).upper()),
-                                  self.idx, self.n, self.delete)
+                span = shift_span(
+                    column_index_from_string(s.group(2).upper()),
+                    column_index_from_string(e.group(2).upper()),
+                    self.idx,
+                    self.n,
+                    self.delete,
+                )
                 if span is None:
                     return None
-                new_start = (f"{s.group(1)}{get_column_letter(span[0])}"
-                             f"{s.group(3)}{s.group(4)}")
-                new_end = (f"{e.group(1)}{get_column_letter(span[1])}"
-                           f"{e.group(3)}{e.group(4)}")
+                new_start = f"{s.group(1)}{get_column_letter(span[0])}{s.group(3)}{s.group(4)}"
+                new_end = f"{e.group(1)}{get_column_letter(span[1])}{e.group(3)}{e.group(4)}"
         return new_start, new_end
 
     def _targets_sheet(self, prefix, home_sheet):
@@ -170,8 +174,7 @@ class RefRewriter:
             new = self._shift_coord(start)
             return prefix + ("#REF!" if new is None else new)
         pair = self._shift_pair(start, end)
-        return (prefix + "#REF!" if pair is None
-                else f"{prefix}{pair[0]}:{pair[1]}")
+        return prefix + "#REF!" if pair is None else f"{prefix}{pair[0]}:{pair[1]}"
 
     def _sub_whole(self, match, home_sheet, axis):
         prefix = match.group("sheet") or ""
@@ -191,21 +194,18 @@ class RefRewriter:
             new_start, new_end = map(get_column_letter, span)
         else:
             new_start, new_end = map(str, span)
-        return (f"{prefix}{'$' if start_abs else ''}{new_start}:"
-                f"{'$' if end_abs else ''}{new_end}")
+        return f"{prefix}{'$' if start_abs else ''}{new_start}:{'$' if end_abs else ''}{new_end}"
 
     def _rewrite_segment(self, text, home_sheet):
-        text = WHOLE_COL_RE.sub(
-            lambda m: self._sub_whole(m, home_sheet, "cols"), text)
-        text = WHOLE_ROW_RE.sub(
-            lambda m: self._sub_whole(m, home_sheet, "rows"), text)
+        text = WHOLE_COL_RE.sub(lambda m: self._sub_whole(m, home_sheet, "cols"), text)
+        text = WHOLE_ROW_RE.sub(lambda m: self._sub_whole(m, home_sheet, "rows"), text)
         return REF_RE.sub(lambda m: self._sub(m, home_sheet), text)
 
     def rewrite(self, text, home_sheet):
         """Rewrite refs outside quoted string literals. Returns new text."""
         out, pos = [], 0
         for lit in LITERAL_RE.finditer(text):
-            out.append(self._rewrite_segment(text[pos:lit.start()], home_sheet))
+            out.append(self._rewrite_segment(text[pos : lit.start()], home_sheet))
             out.append(lit.group(0))
             pos = lit.end()
         out.append(self._rewrite_segment(text[pos:], home_sheet))
@@ -241,8 +241,8 @@ def _rewrite_formulas(wb, rewriter, report):
                     new = rewriter.rewrite(cell.value, sheet.title)
                     if new != cell.value:
                         report["formulas"].append(
-                            {"sheet": sheet.title, "cell": cell.coordinate,
-                             "from": cell.value, "to": new})
+                            {"sheet": sheet.title, "cell": cell.coordinate, "from": cell.value, "to": new}
+                        )
                         cell.value = new
 
 
@@ -263,23 +263,22 @@ def _shift_freeze_panes(ws, axis, idx, n, delete, report):
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Insert/delete rows or columns AND rewrite formula "
-                    "references, merges, filters, validations, tables, and "
-                    "defined names to match.",
+        "references, merges, filters, validations, tables, and "
+        "defined names to match.",
         epilog="Cannot shift: chart anchors, images, conditional-format "
-               "rule formulas. See references/restructuring.md.")
+        "rule formulas. See references/restructuring.md.",
+    )
     ap.add_argument("file", help="path to .xlsx file")
     ap.add_argument("--sheet", help="target sheet (default: active)")
     ap.add_argument("--out", help="output path (default: edit in place)")
     op = ap.add_mutually_exclusive_group(required=True)
     op.add_argument("--insert-rows", metavar="IDX[:N]")
     op.add_argument("--delete-rows", metavar="IDX[:N]")
-    op.add_argument("--insert-cols", metavar="COL[:N]",
-                    help="COL is a letter (B) or 1-based number")
+    op.add_argument("--insert-cols", metavar="COL[:N]", help="COL is a letter (B) or 1-based number")
     op.add_argument("--delete-cols", metavar="COL[:N]")
     args = ap.parse_args(argv)
 
-    raw = (args.insert_rows or args.delete_rows
-           or args.insert_cols or args.delete_cols)
+    raw = args.insert_rows or args.delete_rows or args.insert_cols or args.delete_cols
     idx_s, _, n_s = raw.partition(":")
     n = int(n_s) if n_s else 1
     axis = "rows" if (args.insert_rows or args.delete_rows) else "cols"
@@ -292,12 +291,21 @@ def main(argv=None):
     wb = load_workbook(args.file)
     ws = wb[args.sheet] if args.sheet else wb.active
     rewriter = RefRewriter(ws.title, axis, idx, n, delete)
-    report = {"ok": True, "sheet": ws.title, "axis": axis,
-              "op": "delete" if delete else "insert", "index": idx, "count": n,
-              "formulas": [], "merges": [], "tables": {}, "defined_names": {},
-              "validations": [], "conditional_formats": [],
-              "not_shifted": ["chart anchors", "images",
-                              "conditional-format rule formulas"]}
+    report = {
+        "ok": True,
+        "sheet": ws.title,
+        "axis": axis,
+        "op": "delete" if delete else "insert",
+        "index": idx,
+        "count": n,
+        "formulas": [],
+        "merges": [],
+        "tables": {},
+        "defined_names": {},
+        "validations": [],
+        "conditional_formats": [],
+        "not_shifted": ["chart anchors", "images", "conditional-format rule formulas"],
+    }
 
     # 1. capture merge ranges (openpyxl does not move them), then unmerge
     old_merges = [str(r) for r in list(ws.merged_cells.ranges)]
@@ -372,8 +380,7 @@ def main(argv=None):
         if dn.attr_text and "!" in dn.attr_text:
             new = rewriter.rewrite(dn.attr_text, ws.title)
             if new != dn.attr_text:
-                report["defined_names"][name] = {"from": dn.attr_text,
-                                                 "to": new}
+                report["defined_names"][name] = {"from": dn.attr_text, "to": new}
                 dn.attr_text = new
 
     # 9. row heights / column widths
