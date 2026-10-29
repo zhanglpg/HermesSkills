@@ -314,6 +314,48 @@
       },
       "installed_at": "2026-10-07T07:27:31.929032+00:00",
       "updated_at": "2026-10-07T07:27:31.929032+00:00"
+    },
+    "box": {
+      "source": "official",
+      "identifier": "official/productivity/box",
+      "trust_level": "builtin",
+      "scan_verdict": "backfilled",
+      "content_hash": "sha256:de13336d7d0c5056",
+      "install_path": "productivity/box",
+      "files": [
+        "SKILL.md",
+        "references/bulk-operations.md",
+        "references/cli-guide.md",
+        "references/content-workflows.md",
+        "references/hubs.md",
+        "references/oauth-setup.md",
+        "references/rest-api.md",
+        "references/sdk-development.md",
+        "references/search-and-ai.md",
+        "references/troubleshooting.md",
+        "references/webhooks-and-events.md"
+      ],
+      "metadata": {
+        "backfilled_from": "optional-skills"
+      },
+      "installed_at": "2026-10-29T14:19:25.264503+00:00",
+      "updated_at": "2026-10-29T14:19:25.264503+00:00"
+    },
+    "inspecting-hermes-desktop-dom": {
+      "source": "official",
+      "identifier": "official/software-development/inspecting-hermes-desktop-dom",
+      "trust_level": "builtin",
+      "scan_verdict": "backfilled",
+      "content_hash": "sha256:274cba59fe8a04af",
+      "install_path": "software-development/inspecting-hermes-desktop-dom",
+      "files": [
+        "SKILL.md"
+      ],
+      "metadata": {
+        "backfilled_from": "optional-skills"
+      },
+      "installed_at": "2026-10-29T14:19:25.295761+00:00",
+      "updated_at": "2026-10-29T14:19:25.295761+00:00"
     }
   }
 }

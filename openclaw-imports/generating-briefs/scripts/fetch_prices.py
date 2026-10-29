@@ -1,22 +1,41 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["yfinance"]
+# ///
 """
 Fetch real-time portfolio prices for daily brief generation.
 Outputs JSON with current prices and daily changes.
 
 Usage:
     python3 scripts/fetch_prices.py [--tickers GOOG,NVDA,TSM,BABA,SPY,FXI,KWEB]
+
+When yfinance is missing (e.g. Hermes' locked interpreter, which has no pip),
+re-executes itself with `uv run --script` using the dependencies declared above.
 """
 
 import json
+import os
+import shutil
 import subprocess
 import sys
+import warnings
 from datetime import datetime, timezone
 
 try:
     import yfinance as yf
 except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "yfinance", "-q"])
-    import yfinance as yf
+    uv = shutil.which("uv") or next(
+        (p for p in ("/opt/homebrew/bin/uv", os.path.expanduser("~/.local/bin/uv")) if os.path.exists(p)),
+        None)
+    if not uv or os.environ.get("BRIEF_UV_REEXEC"):
+        raise
+    env = {k: v for k, v in os.environ.items() if k not in ("VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME")}
+    env["BRIEF_UV_REEXEC"] = "1"
+    os.execve(uv, [uv, "run", "--quiet", "--script", os.path.abspath(__file__), *sys.argv[1:]], env)
+
+# yfinance trips pandas deprecation warnings that would flood the output
+warnings.filterwarnings("ignore", module=r"yfinance(\.|$)")
 
 DEFAULT_TICKERS = ["GOOG", "NVDA", "TSM", "BABA", "SPY", "FXI", "KWEB", "QQQ"]
 

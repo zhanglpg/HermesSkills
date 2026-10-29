@@ -36,9 +36,13 @@ wrong image on a reference page is far worse than no image.
 
 ## Always-on rules
 
-1. **Authenticity over coverage.** Ship fewer images than keys. A later dynasty's
-copy, a competitor's work, or a photo of the mountain instead of the inscription
-is a factual error the reader will trust because it sits next to authoritative text.
+1. **Reject wrong works, not copies.** Ship fewer images than keys, but do not
+confuse "a copy" with "a wrong image". For pre-Tang calligraphy the original is
+usually lost and the transmitted Tang/Song copy or rubbing IS the work's primary
+witness — the user's standing position is that 摹本/临本/拓本 are the norm and a
+唐摹晋帖 is already the best surviving version. Accept them; reject instead a
+different work, another author's unrelated piece, scenery, signage, or a book scan.
+Every caption must state the version relationship (see Version labeling).
 2. **Use pre-rendered thumbnails, then self-host them compressed.** Request a standard
    width (500/800/1000/1200) and use the returned `thumburl`; full-resolution
    originals hit HTTP 429 within ~20 files, and non-standard widths force on-demand
@@ -56,9 +60,48 @@ is a factual error the reader will trust because it sits next to authoritative t
    and the current holding institution are exactly where model memory fails
    confidently, and they are the claims a knowledgeable reader checks first. One
    web_search per such figure is cheaper than one published error.
-5. **Never state a contested attribution as settled.** When a work's authenticity
+5. **Keep the generator source out of `/tmp`.** A published page is reproducible only
+   while its content modules and matcher rules exist; OS tmp cleanup silently destroys
+   them. Keep them in a durable project dir (e.g. `~/claudews/<project>-src/`) and
+   commit them. If they are already lost, the published HTML is a complete fallback:
+   parse `article.work` blocks back into structured data (name/author/meta/feat/eval/
+   prov/ver/img), then rebuild — verify with a per-article text diff, not by eye.
+6. **Store each image's Commons filename in the data, not just its URL.** It is the
+   evidence a version caption was derived from, and the only way to re-audit captions
+   after a rule change.
+7. **Never state a contested attribution as settled.** When a work's authenticity
    is disputed (真迹 vs 摹本 vs 伪), say so in the provenance text and name the
    mainstream position; do not launder a fringe private-collector claim into fact.
+
+## Version labeling (required on every caption)
+
+A Tang copy and a Ming facsimile look identical in a thumbnail, so the caption must
+say what the reader is looking at. Resolve in this order:
+
+1. The work's own `material` field is authoritative: `真迹` → 真迹墨迹; `摹本` → 摹本系统.
+2. Filename markers: 唐摹/響拓/馮承素 → 唐摹本; 宋拓/明拓/清拓 → 宋/明/清拓本;
+   刻帖/法帖/淳化阁帖 → 刻帖本; 原碑/碑阳/现场 → 原碑影像.
+3. A later hand's name in the title (董其昌/文徵明/赵之谦/秦树声/吴昌硕…) → `<name>临本`.
+4. Era + material inference: 晋唐纸本墨迹 cannot be an original → 唐（宋）摹本系统;
+   bronze/oracle/bamboo slips → 原器影像.
+5. Never leave it blank; fall back to 馆藏扫描件 or 相关影像.
+
+Normalize 繁体 author names before comparing — otherwise `蘇軾` in a filename is
+mistaken for a copyist of 苏轼 and a genuine 寒食帖 scan is labelled a facsimile.
+
+Three further traps in step 3:
+- Only call it a copy when the name is **not** the work's author. A file named
+  `郑燮.jpg` is Zheng Banqiao's own work, not "郑板桥临本".
+- A later name can mean **transcription, not facsimile**: 金农《隶书节录黄庭坚与宋子茂书》
+  writes Huang's text in Jin's own brush — `墨迹本`, not `黄庭坚临本`.
+- When it genuinely is a copy, name what was copied: 康里巎巎《述笔法》→ `临颜真卿《述笔法》`,
+  宋克《孙过庭书谱册》→ `临孙过庭《书谱》`. Bare `颜真卿临本` is ambiguous and reads wrong.
+
+After any tagging change, **audit all captions**: re-derive each from the stored
+Commons filename with the current rules and diff against the published caption.
+Real errors surface as a short list (this is how a Ming catalogue book standing in
+for 米芾《珊瑚帖》and a poet's former-residence photo standing in for his calligraphy
+were caught). Fix the tag, and drop the image when it is simply the wrong work.
 
 ## Procedure
 
@@ -121,4 +164,17 @@ is a factual error the reader will trust because it sits next to authoritative t
 - **Strip HTML from Commons `Artist` metadata** before rendering it; it arrives as
   `<a href=...>` markup.
 - **Report coverage honestly.** Tell the user the resolved/total ratio and that
-  unmatched works render as text cards. Do not imply full illustration.
+unmatched works render as text cards. Do not imply full illustration.
+- **Commons search is AND over terms.** `赵孟頫 前后赤壁赋` returns zero because the
+  file is `赵孟頫 赤壁赋 局部.jpg`; one modifier absent from the filename kills the
+  query. Search author + core work name, try 简/繁, and add romanized forms
+  (`NongfangShitie.jpg` = 秾芳诗帖) to `must`.
+- **`image/vnd.djvu` is a book scan, not an artwork.** CADAL/叢書/文集 digitisations
+  flood searches for famous works; reject the mime outright instead of scoring it low.
+- **An institutional catalogue prefix does not prove the right work.** `NLC…珊瑚網`
+  is a Ming calligraphy catalogue, not 米芾《珊瑚帖》; `文翔凤草书节录黄庭经` quotes the
+  text but is not 《黄庭经》; `Former Residence of Sha Menghai` is a building. Match the
+  **work title**, then eyeball load-bearing images with vision before publishing.
+- **A 429 is per-IP and shared with your own browser.** After a bulk run the same
+  machine cannot fetch even one thumbnail; that is not a dead link, so never delete
+  resolved entries on 429 — retry later or leave those keys hotlinked.

@@ -81,7 +81,7 @@ hermes config get model.default                                     # confirm re
 
 Keep the broken window to one command chain (write, test, restore in the same shell line) so cron jobs or other sessions cannot pick up the broken primary. Finish with `hermes fallback list` + `hermes config check`.
 
-**Do not** try to verify by importing Hermes internals from `venv/bin/python`: the `hermes_cli` bootstrap re-execs into its pinned runtime interpreter with `-I`, dropping the venv site-packages, so `import yaml` (and every Hermes module) fails. Verify through the CLI instead.
+**Do not** import Hermes internals from the project's own `.venv`: the `hermes_cli` bootstrap re-execs into its pinned runtime interpreter with `-I`, dropping that venv's site-packages, so `import yaml` (and every Hermes module) fails there. The interpreter that *does* work is the staged runtime venv that `hermes doctor` prints as `Runtime venv staged (<path>)` — run `<path>/bin/python` with cwd `~/.hermes/hermes-agent` and `import hermes_cli.config` succeeds. Read the path from doctor output; the hash directories change on reinstall. Use it as the escape hatch for config helpers that have no CLI verb (e.g. `save_env_value` / `remove_env_value` for `.env` keys), and still prefer a real `hermes chat` turn for verifying model routing.
 
 ## Pitfalls
 
