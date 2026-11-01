@@ -70,6 +70,24 @@ manuscript photos) — art/calligraphy history, artefact catalogues, exhibition 
 Reusable resolver implementing steps 2–6: `scripts/resolve_commons.py`
 (rules.json in, cache.json out, re-runnable).
 
+## When Commons has nothing (Chinese/Japanese museum holdings)
+Commons cannot cover works held in PRC/Taiwan/Japan museums — CADAL/NPM book scans flood
+the results and no object image exists. Do not conclude "no image"; switch source:
+1. Museum official image endpoints first: a TNM collection page
+   (`tnm.jp/modules/r_collection/index.php?colid=TB1459&controller=dtl`) embeds
+   `uploads/r_collection/LL_<no>.jpg` at 3000 px, clean and correctly identified — far better
+   than any aggregator copy. ColBase (`colbase.nich.go.jp/collection_items/tnm/<id>`) and NPM's
+   open data cover most Japan/Taiwan-held works.
+2. Otherwise harvest Baidu Images: `image.baidu.com/search/index?tn=baiduimage&word=<query>`,
+   scroll, then read `img[data-objurl]` (original URL) — not `src`, which is a 500 px proxy.
+   Rank by alt-text match + domain, then vision-verify.
+3. Reject modern practice sheets (临帖稿: grid paper, correction dots, student handwriting),
+   sticker/emoji-decorated reproductions, and article screenshots with title cards; crop
+   watermarks only when they sit in the margin.
+4. When you must crop one work out of a long scroll (e.g. 黄庭坚's colophon inside 寒食帖),
+   download the full Commons file, locate the segment on a downscaled strip, then crop at full
+   resolution — that beats any web copy.
+
 ## Pitfalls
 - Never ban artist names globally: a global artist ban rejects a work's OWN author
   (a 張旭 piece was killed by ban token 張旭). Per-work ban lists hold confusable works

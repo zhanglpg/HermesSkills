@@ -1,6 +1,9 @@
 ---
 name: travel-planning
-description: "Use when planning multi-stop/weekend trips: train+flight feasibility, scenic-area ticket gates, itinerary."
+description: "Use when planning trips: flights, closures, itineraries."
+version: 1.1.0
+author: Hermes Agent
+license: MIT
 tags:
   - travel
   - itinerary
@@ -13,6 +16,16 @@ tags:
 ## When to Use
 - User asks to plan a multi-day trip, recommend routes for a destination, or check whether an itinerary fits around a flight/train ("顺路吗？来得及吗？" style questions).
 - Checking flight options from secondary/regional airports (esp. China).
+
+## Step 0 — Operating window and legality gate (do this first)
+
+Transport feasibility is worthless if the objective is shut. For any summit, national park, seasonal toll road, or ticketed scenic area, open the **operator's own site** before sequencing days and answer three questions:
+
+- **What are this year's opening and closing dates?** Not "usually" — the current year's published dates.
+- **Is the closure advisory or statutory?** "Not recommended" and "prohibited by law, penalty X" are completely different products. Quote the rule and the penalty.
+- **What closes with it?** Huts, rescue stations, toilets, water, trail maintenance, signage, cell coverage, and the access road usually close as a set. A still-open lower section does not make the summit reachable.
+
+If the objective is closed on the requested dates, lead with that fact in the first paragraph, then offer exactly two constructive paths: **keep the dates and swap the objective** for something nearby of comparable difficulty (give route stats and a hard turn-around time), or **keep the objective and move the dates** into the legal window (give the booking lead time). Never hand over a "how to do it anyway" itinerary, and never bury a closure under logistics. Depth and a worked example: `references/seasonal-and-legal-gates.md`.
 
 ## Core workflow: anchor-first feasibility
 1. **Anchor the hard constraint first — and check the RETURN leg's departure time, not just its existence.** The return flight/train dictates everything. Before any itinerary talk, verify the route exists from that airport/station (Step A / A2). Old "route opened" news is frequently stale — routes get suspended within a season or two.
@@ -35,6 +48,9 @@ Booking-site APIs (ctrip/umetrip/qunar/trip.com/variflight) are JS-rendered or a
 - The page states plainly whether the route exists ("目前...没有直达航班" + connection options), airlines serving it, weekly frequency, earliest/latest departure, flight duration, and a `last-updated-on` timestamp — quote that date when advising.
 - The monthly schedule grid IS in the raw HTML even though it looks client-rendered. Parse with regex on the UNSTRIPPED page — see `references/china-flight-data.md` for the exact recipe.
 - **Caveats:** the grid covers only the currently displayed month; `?month=`/`?date=` query params do NOT change the served HTML (month switching is client-side), so day-lists in `data-dates` apply to that month. For a specific future date, present the pattern with caveats and tell the user to confirm in a booking app before buying. Never present this data as a confirmed bookable seat.
+- **Nonstop frequency is weekday-specific — query the actual travel date, not just the route page.** A route can run Fri/Mon but not Sunday; the grid's `data-dates` shows operating days, and a dated Google Flights query (`q=Nonstop flights from X to Y on YYYY-MM-DD`) confirms whether the return date really has a nonstop.
+- **No nonstop on the return date? Enumerate alternate arrival airports** within ~2h ground transfer (NRT→NGB/PVG instead of HGH, then HSR) and put arrival-home time in the decision table — a cheap morning flight to a secondary airport often beats a 1-stop connection that lands at midnight.
+- **Never state a flight number you have not seen in a source.** Route + airline + times is a complete, verifiable statement; an invented number reads authoritative and is wrong. The FlightConnections grid carries the numbers when you need them.
 - Route absent? Rank fallbacks by effort: (a) drive/train to the provincial capital airport, (b) high-speed rail to a major hub, (c) one-stop connection from the regional airport (connection risk is the user's — flag it).
 
 ## Step A2: Rail schedule research (China)
@@ -53,6 +69,11 @@ Must be resolved BEFORE sequencing days:
 - **Multiple gates with non-interchangeable tickets.** East/west gates can be tens of km apart and require separate tickets; a traverse ("up one side, down the other") may or may not be purchasable. Phone the service line to confirm — official 攻略 and the booking page can contradict each other.
 - **Ticket ≠ all-in.** Gate ticket, shuttle bus, and cable car are usually three separate charges; total the real per-person cost rather than quoting the headline ticket price.
 
+## Deliverable: standalone HTML itinerary
+When the user asks for the plan as a document rather than chat text, build one self-contained `.html` (inline CSS, no external assets, `prefers-color-scheme`, `@media print`), save it to the Desktop, and send it as a file. Put the blocking fact in a coloured box in the first screen, not in a footnote.
+
+Verify before delivering: tag-balance counts for `table/tr/td/div/ol/li`, a real browser render with a screenshot of the top and one mid-page section (tables and timelines break quietly), and a scan for traditional-character contamination when Chinese body text carries Japanese proper nouns — 稜/續/個/時 slip in from copied source names and read as sloppy.
+
 ## Pitfalls
 - Don't build an itinerary around a flight or train you haven't verified exists — check route existence BEFORE sequencing days. A whole morning-hike plan collapsed because the assumed airport had no route to the destination city.
 - Outbound and return availability are asymmetric on remote routes: verify BOTH directions separately. A comfortable afternoon departure out can pair with a 08:22-only return, and the return is what costs you a day.
@@ -60,6 +81,7 @@ Must be resolved BEFORE sequencing days:
 - Flight day + activity on the same side as the airport is fine; opposite direction is a trap.
 - "直飞" results on OTA aggregator pages are sometimes stale placeholder data — cross-check against at least two independent sources.
 - Third-party travel-guide articles are unreliable on ticket pre-sale windows and opening hours — they are frequently AI-generated and self-contradictory (some even carry a "本文由AI生成" footer). Use them for route shape and local colour; use official sources for anything that gates entry.
+- **Match rental-car counter hours to the actual arrival time, not the scheduled landing.** Wheels-down 19:00 + 40–50 min immigration puts you at the desk after a 20:00 close; pick the earlier flight or book after-hours pickup. Compute last buses, last trains, and rental desks from wheels-down, never from the timetable's arrival.
 
 ## Related skills
 - `maps` — geocoding, distances, driving times (use it instead of guessing km).

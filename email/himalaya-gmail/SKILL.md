@@ -37,6 +37,7 @@ himalaya envelope list -s 5       # newest 5
 ```bash
 himalaya envelope list -s 20                      # newest 20
 himalaya envelope list -f INBOX -s 10             # by mailbox
+himalaya envelope list -s 30 --json               # machine-readable
 himalaya message read <ID>                        # full body
 himalaya message read <ID> --preview              # headers + first lines
 himalaya flag add <ID> --flag seen
@@ -44,6 +45,16 @@ himalaya message move <ID> 'Archive'
 printf 'To: a@b.c\nSubject: hi\n\nbody' | himalaya message send
 himalaya message reply <ID> --all                 # opens $EDITOR; avoid in agent runs
 ```
+
+**JSON output is a global `--json` flag in v2** (v1's `--output json` is rejected with
+"unexpected argument"). Scripts written for v1 break silently. The envelope payload is wrapped:
+`{"queued": 0, "envelopes": [{id, subject, flags, from: [{name, email}], date: "...Z", ...}]}` —
+note `from` is a **list** of `{name, email}` (v1 used `{name, addr}`) and dates end in `Z`, which
+Python 3.9's `fromisoformat` rejects unless you `.replace("Z", "+00:00")`.
+
+**Known v2.2.1 quirk:** `envelope list --json` returns `"flags": []` for every message even when
+the table view shows `*` (unread). Don't trust JSON flags for read/unread; use the table's FLAGS
+column, or accept that everything will look unread.
 
 For agent use, prefer `message compose`-free paths: build the full RFC 5322 text
 and pipe it to `himalaya message send`, so nothing blocks on an editor. Add
@@ -73,8 +84,38 @@ and pipe it to `himalaya message send`, so nothing blocks on an editor. Add
    `text`; a wrong key sends only a newline and the prompt re-renders as empty.
    Choose the highlighted default with an empty submit.
 
+## Credential rotation (password revoked, expired, or leaked)
+
+A secret that has appeared in a chat transcript is burned — rotate it, do not
+launder it. And **never accept the replacement in chat**: the second password
+would be exposed exactly like the first. Hand the user a local prompt instead.
+
+1. User revokes the old password (Google Account → Security → App passwords) and
+   creates a new one, without pasting it anywhere.
+2. They run `scripts/set-gmail-password.sh` in their own Terminal: `read -s` for
+   hidden input, `security -i` via stdin (no argv, no shell history), `-U` to
+   overwrite, then `himalaya account check`.
+3. Verify from the agent side — all three must pass:
+   ```bash
+   security find-generic-password -a himalaya-gmail -w >/dev/null && echo "key ok"
+   himalaya account check            # imap: OK / smtp: OK
+   himalaya envelope list -s 3
+   ```
+4. Record only that the old value is void (never the new value) if it had been
+   stored in memory, notes, or any config.
+
+**Deleting a stale Keychain item.** Match the attributes the entry actually has.
+The live item is `-a himalaya-gmail`; a duplicate created with the email address as
+account (`-a zhanglpg@gmail.com -s himalaya-gmail`) is a *different* item:
+```bash
+security delete-generic-password -a "zhanglpg@gmail.com" -s "himalaya-gmail"
+```
+Then confirm the active item survives and `himalaya account check` still passes —
+deleting the wrong one looks like a sudden "item could not be found" auth failure.
+
 ## Safety
 
 Sending is an external action: draft, show the user, and send only after explicit
 approval. Never paste the app password into chat, logs, or a config file — it
-belongs in Keychain only.
+belongs in Keychain only. Treat any password that has been typed into chat as
+compromised and rotate it immediately.

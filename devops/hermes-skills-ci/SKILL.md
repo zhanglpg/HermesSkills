@@ -77,7 +77,12 @@ It is deliberately lint-only (fast); tests still belong to `pytest tests/` befor
 1. **Do not run `ruff format` with a newer ruff than the pin.** A different version can reflow Python and Markdown differently, producing a huge diff and failing CI against the pinned version. Check `ruff --version` == 0.17.3.
 2. **`ruff format` may reformat Markdown code fences** if `**/*.md` is removed from `extend-exclude`. Leave that exclusion in place; skill docs are hand-tuned.
 3. **`pytest` from the wrong interpreter** silently uses stale system deps. Always use `/tmp/skills-venv/bin/python -m pytest tests/`, never bare `pytest`.
-4. **Commit only intended files.** `git status` first; exclude `*.db`, `__pycache__`, `.DS_Store`, `.usage.json`, curator state. `.gitignore` covers most, but check before `git add -A`.
+4. **Stage by path, never `git add -A`.** The curator continuously rewrites
+   `.bundled_manifest`, `.curator_ledger.jsonl` and `.hub/lock.json`, and other skills
+   often carry uncommitted edits; `git add -A` sweeps all of it into your commit, and
+   that cargo — not your change — is what trips the lint/format gate. Run
+   `git add <skill-dir>` and confirm with `git status --porcelain` that only your
+   files are staged.
 5. **Duplicated skill scripts** exist (`productivity/docx` vs `productivity/microsoft-office`, xlsx copies). Fixing one copy but not the other leaves CI red — run the repo-wide commands, not per-file fixes.
 
 ## Verification Checklist
@@ -95,7 +100,7 @@ cd ~/.hermes/skills
 export PATH="$HOME/Library/Python/3.9/bin:$PATH"
 ruff check --fix . && ruff format . && ruff check . && ruff format --check .
 /tmp/skills-venv/bin/python -m pytest tests/ -q
-git add -A && git status --porcelain
+git add <skill-dir> && git status --porcelain   # never `git add -A`
 git commit -m "chore: <description>" && git push
 gh run list --repo zhanglpg/HermesSkills --limit 1
 ```

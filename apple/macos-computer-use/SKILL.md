@@ -179,6 +179,17 @@ your conversation context.
 - **"cua-driver not installed"** — Run `hermes tools` and enable Computer
   Use; the setup will install cua-driver via its upstream script. Requires
   macOS + Accessibility + Screen Recording permissions.
+- **`capture` returns width 0 / height 0 with zero elements, and `mode="ax"`
+  is empty too** — that is a TCC grant gap on the process doing the capture,
+  not a window that failed to appear. Grant Screen Recording **and**
+  Accessibility to that process in System Settings → Privacy & Security, then
+  relaunch it; the same gap makes a plain shell `screencapture -x` fail with
+  `could not create image from display`. Never report "the app failed to
+  launch" off an empty capture — prove the launch non-visually instead:
+  `pgrep -fl "<Bundle>.app/Contents/MacOS/<exe>"` for renderer and GPU
+  children, `lsappinfo find bundleid=<bundle-id>` for the Launch Services
+  record, and the app's own log for boot landmarks. Then say the capture was
+  unavailable rather than implying the app is broken.
 - **Element index stale** — SOM indices come from the last `capture` call.
   If the UI shifted (new tab opened, dialog appeared), re-capture before
   clicking.
@@ -199,3 +210,6 @@ your conversation context.
 - File edits — use `read_file` / `write_file` / `patch`, not `type` into
   an editor window.
 - Shell commands — use `terminal`, not `type` into Terminal.app.
+- Hardware questions — which display, what is plugged into it, why there is
+  no mic — read the OS directly; load `macos-hardware-inspection`. Neither
+  clicking nor a screenshot answers them.
