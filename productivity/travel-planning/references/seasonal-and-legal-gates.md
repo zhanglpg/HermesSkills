@@ -12,6 +12,7 @@ Resolve this before spending any effort on flights, hotels, or route timing.
 | Facility closure | Huts, toilets, rescue, water off | Facility operating-period table |
 | Access-road closure | Toll road / pass gated for winter | Road operator status page |
 | Permit or quota | Daily cap, lottery, timed entry | Booking system + official FAQ |
+| Entry eligibility | Visa-free list, permit required, nationality-specific ban | Immigration authority / consulate |
 
 ## Verification recipe
 
@@ -40,6 +41,7 @@ Never silently substitute a different mountain under the original title — say 
 
 ## Pitfalls
 
+- **Entry eligibility is the first gate and it is passport-specific.** A route can be open, affordable, and perfectly timed while the traveller cannot legally board the flight — confirm nationality and visa basis before any route research. The same destination can be closed to one passport and open to another (mainland residents vs US passports for Taiwan).
 - A guide company's "off-season climbing is permitted" page describes tolerated risk, not legality. Cite the road authority, not the vendor.
 - Closure dates drift a few days each year — read the current year's table, never last year's blog post.
 - A still-open lower section is the most common false green light; check the section that contains the summit.

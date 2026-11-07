@@ -19,7 +19,9 @@ tags:
 
 ## Step 0 — Operating window and legality gate (do this first)
 
-Transport feasibility is worthless if the objective is shut. For any summit, national park, seasonal toll road, or ticketed scenic area, open the **operator's own site** before sequencing days and answer three questions:
+Transport feasibility is worthless if the objective is shut. For any summit, national park, seasonal toll road, or ticketed scenic area, open the **operator's own site** before sequencing days and answer four questions:
+
+- **Can the traveller enter the country at all?** Entry rules are passport-specific and outrank every other gate. Mainland Chinese residents cannot travel to Taiwan for tourism island-wide (individual travel suspended since 2019; since April 2026 only Fujian and Shanghai residents, and only to Kinmen–Matsu), while a US passport uses Taiwan's foreign-national channel. Confirm nationality before researching routes — a perfect route behind an impossible visa is worthless. Taiwan permit mechanics: `references/taiwan-hiking-permits.md`.
 
 - **What are this year's opening and closing dates?** Not "usually" — the current year's published dates.
 - **Is the closure advisory or statutory?** "Not recommended" and "prohibited by law, penalty X" are completely different products. Quote the rule and the penalty.

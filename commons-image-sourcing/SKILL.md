@@ -69,7 +69,10 @@ This covers both sourcing a new set and auditing one that is already published.
      `_imaging` extension and breaks the browser tools. Use sips, or a separate venv.
 9. Hand the page to the publishing workflow (this user: single-file HTML under
    `~/claudews/zhanglpg.github.io/<slug>/`, homepage card, git push; verify curl 200 and
-   in-browser loaded-image count).
+   in-browser loaded-image count). Stamp every build with a version string rendered in the page
+   and verify the LIVE html with a cache buster — Pages serves HTML at `max-age=600`, so a stale
+   tab reads as "the site is unchanged" while the deploy is fine (recipe:
+   single-file-react-gh-pages → Deploy).
 
 Reusable resolver implementing steps 2–6: `scripts/resolve_commons.py`
 (rules.json in, cache.json out, re-runnable).
@@ -108,14 +111,6 @@ the results and no object image exists. Do not conclude "no image"; switch sourc
    download the full Commons file, locate the segment on a downscaled strip, then crop at full
    resolution — that beats any web copy.
 
-4. Commons thumbnails cap at 3840 px: asking `iiurlwidth=6000` returns a 3840 px thumb
-   (`thumbwidth` tells the truth). For 15:1–25:1 handscrolls even 3840 px is a 150–250 px
-   strip, so keep a separate `hi` file for the lightbox and a 2200 px file for the card.
-5. A file whose title ends in 卷/册 is often the *whole album* — painting, letter, then
-   colophons. Check the centre of the image before shipping: 王珣《伯远帖卷》 on Commons is
-   mostly 董邦达's landscape, with the 47-character letter as a small panel. Crop to the
-   letter or source a separate image.
-
 ## Pitfalls
 - A Commons thumbnail at `iiurlwidth=1400` collapses a 20:1 handscroll to 1280×53–210 px:
   blank on the card, unreadable at 1:1 in a viewer. Detect `ar > 6` and re-fetch — but
@@ -123,12 +118,17 @@ the results and no object image exists. Do not conclude "no image"; switch sourc
   echoes the 6000/8000 you asked for), so 3840 is the practical ceiling without storing
   originals. Keep the 2200 px file for the card and a separate `img/hi/` copy for the
   viewer rather than shipping one oversized file to every card.
+- A Commons file titled …卷/册 is often the WHOLE album — painting, letter, then colophons — so
+  its thumbnail reads as a faint landscape and passes any name check. 王珣《伯远帖卷》 is mostly
+  董邦达's painting with the 47-character letter as one small panel; open the middle of the file
+  at full size before shipping, then crop to the letter or source a separate sheet.
 - `const top = document.getElementById('top')` in a classic inline script throws
   `Identifier 'top' has already been declared` (window.top is a non-configurable global)
   and kills the ENTIRE script block — search, nav and lightbox all silently dead while the
   HTML still renders. Rename it (`topBtn`). Diagnose a dead inline script by hooking
   `window.onerror` via `Page.addScriptToEvaluateOnNewDocument` before navigating and reading
-  `window.__errs`; a script that fails at parse time prints nothing you can see otherwise.
+  `window.__errs`. `node --check` passes on the identical text — the rejection happens when the
+  browser instantiates the script's global bindings, so a syntax check proves nothing.
 - Write harvested candidate JSON to your own scratch directory, never `$BH_AGENT_WORKSPACE`:
   the browser workspace can rotate between browser_exec calls and the files vanish mid-task
   (a full re-harvest costs more than the write).

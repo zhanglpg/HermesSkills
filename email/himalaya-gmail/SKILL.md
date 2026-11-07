@@ -56,6 +56,19 @@ Python 3.9's `fromisoformat` rejects unless you `.replace("Z", "+00:00")`.
 the table view shows `*` (unread). Don't trust JSON flags for read/unread; use the table's FLAGS
 column, or accept that everything will look unread.
 
+**Never run `himalaya` with no subcommand from an agent or cron turn.** Bare
+`himalaya` launches the interactive TUI and waits for a TTY — the call sits until
+the turn (or the whole cron lease) is killed, and the job fails with no error text.
+Always pass a subcommand, and in scheduled jobs wrap the call in `timeout`.
+
+**For scheduled email checks, do not let a prompt assemble imaplib inline.** Use
+`~/.hermes/scripts/email-fetch-new.py`: it reads the checkpoint in
+`~/.hermes/cron/email-state.json`, calls `himalaya envelope list --json`, filters by
+date, and prints one line per message in ~3 s. Inline Python in a cron prompt is
+re-derived every run and drifts. If imaplib is genuinely needed, IMAP SEARCH takes
+`SINCE 02-Nov-2026` — an ISO date like `2026-11-02` returns
+`BAD [Could not parse command]`.
+
 For agent use, prefer `message compose`-free paths: build the full RFC 5322 text
 and pipe it to `himalaya message send`, so nothing blocks on an editor. Add
 `--save Sent` (or omit `--no-save`) so the copy lands in Gmail's Sent folder.

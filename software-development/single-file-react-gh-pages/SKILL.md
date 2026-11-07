@@ -104,6 +104,25 @@ git add <project>/ .gitignore && git commit -m "..." && git push
 Jekyll build takes ~30-60s; a fresh subdir 404s briefly then returns 200.
 Verify with `curl -s -o /dev/null -w '%{http_code}' https://zhanglpg.github.io/<project>/`.
 
+### A pushed deploy is not a visible deploy (HTML cache)
+
+GitHub Pages serves HTML with `Cache-Control: max-age=600`, so a tab opened before the push —
+or any reload inside ten minutes — keeps rendering the old page. The user then reports "the
+site is unchanged" when the deploy is fine. Triage in this order; never re-deploy first:
+
+1. Fetch the live HTML with a cache buster and grep for a string only the new build has:
+   `curl -s "https://zhanglpg.github.io/<project>/?cb=$RANDOM" | grep -c '<new marker>'`.
+2. Confirm which commit is live:
+   `gh api /repos/<owner>/<repo>/pages/builds/latest --jq '{status,commit,updated_at}'` —
+   status `built` with a fresh `updated_at` means the server is current.
+3. Only then explain the cache and give the remedy explicitly: Cmd+Shift+R, or open the URL
+   with `?v=N`.
+
+Ship a marker so this is never ambiguous: stamp each build at build time from
+`datetime.now()` into a small chip beside the page title plus a footer line
+(`版本 2026-11-02 08:12 · 169 件作品`). The user can then tell at a glance which build they are
+looking at, and step 1 has something distinctive to grep for.
+
 ## Design system (dark, Strava-style)
 
 - Fonts: Bebas Neue (display numerals/headers) + Space Grotesk (body).
